@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Set;
+import java.util.UUID;
 
 @Data
 @Entity
@@ -30,6 +31,10 @@ public class User {
 
     private String password;
 
+    private UUID verificationCode;
+
+    private boolean enabled;
+
     @ManyToMany
     @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
@@ -40,5 +45,11 @@ public class User {
         this.lastName = lastName;
         this.email = email;
         this.password = password;
+        this.verificationCode = UUID.randomUUID();
+        this.enabled = false;
+    }
+
+    public String getFullName() {
+        return String.join(" ", firstName, lastName);
     }
 }
