@@ -1,17 +1,15 @@
-package com.unibuc.fmi.eventful.dto.auth;
+package com.unibuc.fmi.eventful.dto.request.signup;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
-@AllArgsConstructor
-public class SignupRequest {
+public abstract class BaseSignupRequest {
 
     @Email
     private String email;

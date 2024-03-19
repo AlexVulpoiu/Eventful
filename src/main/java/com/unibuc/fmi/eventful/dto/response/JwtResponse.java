@@ -1,4 +1,4 @@
-package com.unibuc.fmi.eventful.dto.auth;
+package com.unibuc.fmi.eventful.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,9 +1,9 @@
 package com.unibuc.fmi.eventful.controllers;
 
-import com.unibuc.fmi.eventful.dto.auth.JwtResponse;
-import com.unibuc.fmi.eventful.dto.auth.LoginRequest;
-import com.unibuc.fmi.eventful.dto.auth.MessageResponse;
-import com.unibuc.fmi.eventful.dto.auth.SignupRequest;
+import com.unibuc.fmi.eventful.dto.request.signin.LoginRequest;
+import com.unibuc.fmi.eventful.dto.request.signup.UserSignupRequest;
+import com.unibuc.fmi.eventful.dto.response.JwtResponse;
+import com.unibuc.fmi.eventful.dto.response.MessageResponse;
 import com.unibuc.fmi.eventful.model.Role;
 import com.unibuc.fmi.eventful.model.User;
 import com.unibuc.fmi.eventful.repository.RoleRepository;
@@ -44,7 +44,7 @@ public class AuthController {
 
     private final SendEmailService sendEmailService;
 
-    @PostMapping("/signin")
+    @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         Optional<User> optionalUser = userRepository.findByEmail(loginRequest.getEmail());
 
@@ -74,16 +74,16 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signupRequest)
+    public ResponseEntity<?> registerUser(@Valid @RequestBody UserSignupRequest userSignupRequest)
             throws MessagingException, UnsupportedEncodingException {
-        if (userRepository.existsByEmail(signupRequest.getEmail())) {
+        if (userRepository.existsByEmail(userSignupRequest.getEmail())) {
             return ResponseEntity
                     .badRequest()
                     .body(new MessageResponse("Error: Email is already in use!"));
         }
 
-        User user = new User(signupRequest.getFirstName(), signupRequest.getLastName(), signupRequest.getEmail(),
-                passwordEncoder.encode(signupRequest.getPassword()));
+        User user = new User(userSignupRequest.getFirstName(), userSignupRequest.getLastName(), userSignupRequest.getEmail(),
+                passwordEncoder.encode(userSignupRequest.getPassword()));
 
         Role userRole = roleRepository.findByName("USER")
                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));

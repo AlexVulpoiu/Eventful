@@ -2,6 +2,7 @@ package com.unibuc.fmi.eventful.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -11,11 +12,12 @@ import lombok.experimental.SuperBuilder;
 @Entity
 @SuperBuilder
 @NoArgsConstructor
-@Table(name = "users")
+@AllArgsConstructor
+@Table(name = "legal_persons")
 @EqualsAndHashCode(callSuper = true)
-public class User extends AbstractUser {
+public class LegalPerson extends Organiser {
 
-    public User(String firstName, String lastName, String email, String password) {
-        super(firstName, lastName, email, password);
-    }
+    private String name;
+
+    private Long cui;
 }

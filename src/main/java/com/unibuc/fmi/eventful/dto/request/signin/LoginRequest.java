@@ -1,4 +1,4 @@
-package com.unibuc.fmi.eventful.dto.auth;
+package com.unibuc.fmi.eventful.dto.request.signin;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
