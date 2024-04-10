@@ -1,7 +1,7 @@
 package com.unibuc.fmi.eventful.security.services;
 
-import com.unibuc.fmi.eventful.model.User;
-import com.unibuc.fmi.eventful.repository.UserRepository;
+import com.unibuc.fmi.eventful.model.AbstractUser;
+import com.unibuc.fmi.eventful.repository.AbstractUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -13,12 +13,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    private final UserRepository userRepository;
+    private final AbstractUserRepository abstractUserRepository;
 
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(username)
+        AbstractUser user = abstractUserRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
 
         return UserDetailsImpl.build(user);

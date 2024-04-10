@@ -12,5 +12,5 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 public class PersonSignupRequest extends OrganiserSignupRequest {
 
-    private String cnp;
+    private long cnp;
 }

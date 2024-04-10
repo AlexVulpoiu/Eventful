@@ -1,10 +1,10 @@
 package com.unibuc.fmi.eventful.repository;
 
-import com.unibuc.fmi.eventful.model.User;
+import com.unibuc.fmi.eventful.model.Person;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface PersonRepository extends JpaRepository<Person, Long> {
 
 }

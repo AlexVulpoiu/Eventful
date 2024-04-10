@@ -1,6 +1,6 @@
 package com.unibuc.fmi.eventful.services;
 
-import com.unibuc.fmi.eventful.model.User;
+import com.unibuc.fmi.eventful.model.AbstractUser;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ public class SendEmailService {
 
     private final JavaMailSender javaMailSender;
 
-    public void sendVerificationEmail(User user) throws MessagingException, UnsupportedEncodingException {
+    public void sendVerificationEmail(AbstractUser user) throws MessagingException, UnsupportedEncodingException {
         String toAddress = user.getEmail();
         String subject = "Please verify your registration";
         String content = "Dear [[name]],<br>"

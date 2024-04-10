@@ -17,11 +17,11 @@ import lombok.experimental.SuperBuilder;
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Organiser extends AbstractUser {
 
-    private String commerceRegisterNumber;
+    protected String commerceRegistrationNumber;
 
-    @OneToOne
-    private Address address;
+    @OneToOne(cascade = CascadeType.ALL)
+    protected Address address;
 
-    @OneToOne
-    private BankAccount bankAccount;
+    @OneToOne(cascade = CascadeType.ALL)
+    protected BankAccount bankAccount;
 }

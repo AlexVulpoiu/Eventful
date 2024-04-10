@@ -12,14 +12,14 @@ import lombok.experimental.SuperBuilder;
 public abstract class BaseSignupRequest {
 
     @Email
-    private String email;
+    protected String email;
 
     @NotBlank
-    private String firstName;
+    protected String firstName;
 
     @NotBlank
-    private String lastName;
+    protected String lastName;
 
     @NotBlank
-    private String password;
+    protected String password;
 }

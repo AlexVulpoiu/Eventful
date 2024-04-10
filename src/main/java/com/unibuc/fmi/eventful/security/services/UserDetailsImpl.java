@@ -1,7 +1,7 @@
 package com.unibuc.fmi.eventful.security.services;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.unibuc.fmi.eventful.model.User;
+import com.unibuc.fmi.eventful.model.AbstractUser;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -39,7 +39,7 @@ public class UserDetailsImpl implements UserDetails {
         this.authorities = authorities;
     }
 
-    public static UserDetailsImpl build(User user) {
+    public static UserDetailsImpl build(AbstractUser user) {
         List<GrantedAuthority> authorities = user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority(role.getName()))
                 .collect(Collectors.toList());

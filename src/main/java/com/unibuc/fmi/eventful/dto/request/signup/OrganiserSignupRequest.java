@@ -3,6 +3,7 @@ package com.unibuc.fmi.eventful.dto.request.signup;
 
 import com.unibuc.fmi.eventful.dto.AddressDto;
 import com.unibuc.fmi.eventful.dto.BankAccountDto;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -14,9 +15,12 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 public abstract class OrganiserSignupRequest extends BaseSignupRequest {
 
-    private AddressDto address;
+    @NotNull
+    protected AddressDto address;
 
-    private BankAccountDto bankAccountDto;
+    @NotNull
+    protected BankAccountDto bankAccount;
 
-    private String commerceRegistrationNumber;
+    @NotNull
+    protected String commerceRegistrationNumber;
 }
