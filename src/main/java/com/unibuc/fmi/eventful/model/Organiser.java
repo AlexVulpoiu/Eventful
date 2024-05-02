@@ -7,6 +7,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.util.List;
+
 @Data
 @Entity
 @SuperBuilder
@@ -24,4 +26,7 @@ public abstract class Organiser extends AbstractUser {
 
     @OneToOne(cascade = CascadeType.ALL)
     protected BankAccount bankAccount;
+
+    @OneToMany(mappedBy = "organiser")
+    protected List<Event> events;
 }

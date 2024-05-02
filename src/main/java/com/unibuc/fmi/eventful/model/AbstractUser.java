@@ -19,7 +19,7 @@ import java.util.UUID;
 public abstract class AbstractUser {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.TABLE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     protected Long id;
 
     protected String firstName;
@@ -45,7 +45,7 @@ public abstract class AbstractUser {
         return String.join(" ", firstName, lastName);
     }
 
-    public AbstractUser(String firstName, String lastName, String email, String password) {
+    protected AbstractUser(String firstName, String lastName, String email, String password) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
