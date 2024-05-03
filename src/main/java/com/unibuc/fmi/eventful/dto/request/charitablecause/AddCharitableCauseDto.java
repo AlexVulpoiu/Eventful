@@ -1,5 +1,6 @@
-package com.unibuc.fmi.eventful.dto.request.location;
+package com.unibuc.fmi.eventful.dto.request.charitablecause;
 
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -7,27 +8,23 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AddSeatsCategoryDto {
+public class AddCharitableCauseDto {
 
     @NotBlank
     private String name;
 
-    @Min(value = 1)
-    private int minRow;
-
-    @Min(value = 1)
-    private int maxRow;
-
-    @Min(value = 1)
-    private int minSeat;
-
-    @Min(value = 1)
-    private int maxSeat;
-
     @NotBlank
-    private String color;
+    private String description;
+
+    @Min(value = 1)
+    private int neededAmount;
+
+    @Future
+    private LocalDateTime endDate;
 }

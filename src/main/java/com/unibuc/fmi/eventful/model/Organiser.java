@@ -29,4 +29,7 @@ public abstract class Organiser extends AbstractUser {
 
     @OneToMany(mappedBy = "organiser")
     protected List<Event> events;
+
+    @OneToMany(mappedBy = "organiser")
+    protected List<CharitableCause> charitableCauses;
 }

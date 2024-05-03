@@ -1,5 +1,7 @@
 package com.unibuc.fmi.eventful.dto.request.location;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -14,10 +16,12 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class AddSeatedLocationDto extends AddAbstractLocationDto {
 
+    @Min(value = 1)
     private int numberOfRows;
 
+    @Min(value = 1)
     private int seatsPerRow;
 
     @NotEmpty
-    private List<AddSeatsCategoryDto> seatsCategories;
+    private List<@Valid AddSeatsCategoryDto> seatsCategories;
 }

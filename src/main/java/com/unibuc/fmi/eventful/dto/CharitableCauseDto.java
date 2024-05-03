@@ -1,6 +1,5 @@
-package com.unibuc.fmi.eventful.model;
+package com.unibuc.fmi.eventful.dto;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,15 +8,11 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Data
-@Entity
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "charitable_causes")
-public class CharitableCause {
+public class CharitableCauseDto {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
@@ -29,7 +24,4 @@ public class CharitableCause {
     private double collectedAmount;
 
     private LocalDateTime endDate;
-
-    @ManyToOne
-    private Organiser organiser;
 }
