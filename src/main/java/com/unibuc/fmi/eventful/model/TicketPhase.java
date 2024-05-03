@@ -1,6 +1,5 @@
 package com.unibuc.fmi.eventful.model;
 
-import com.unibuc.fmi.eventful.model.ids.TicketPhaseId;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,18 +16,23 @@ import java.time.LocalDate;
 @Table(name = "tickets_phases")
 public class TicketPhase {
 
-    @EmbeddedId
-    private TicketPhaseId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
 
     private double price;
 
     private LocalDate dateLimit;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("standingLocationId")
-    private StandingLocation standingLocation;
+    @ManyToOne
+    private StandingCategory standingCategory;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("eventId")
-    private Event event;
+    public TicketPhase(String name, double price, LocalDate dateLimit, StandingCategory standingCategory) {
+        this.name = name;
+        this.price = price;
+        this.dateLimit = dateLimit;
+        this.standingCategory = standingCategory;
+    }
 }

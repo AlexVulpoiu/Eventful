@@ -13,7 +13,7 @@ import java.io.Serializable;
 @Embeddable
 @NoArgsConstructor
 @AllArgsConstructor
-public class TicketPhaseId implements Serializable {
+public class StandingCategoryId implements Serializable {
 
     private Long standingLocationId;
 

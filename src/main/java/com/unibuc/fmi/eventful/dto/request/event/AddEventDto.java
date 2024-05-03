@@ -47,7 +47,7 @@ public class AddEventDto {
 
     private List<AddCategoryPriceDto> categoriesPrices;
 
-    private List<@Valid AddTicketPhaseDto> ticketPhases;
+    private List<@Valid AddStandingCategoryDto> standingCategories;
 
     public LocalDateTime getStartDateWithPreparationTime() {
         return startDate.minusMinutes(preparationTime);

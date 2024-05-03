@@ -10,7 +10,7 @@ import com.unibuc.fmi.eventful.exceptions.NotFoundException;
 import com.unibuc.fmi.eventful.mappers.EventMapper;
 import com.unibuc.fmi.eventful.model.*;
 import com.unibuc.fmi.eventful.model.ids.CategoryPriceId;
-import com.unibuc.fmi.eventful.model.ids.TicketPhaseId;
+import com.unibuc.fmi.eventful.model.ids.StandingCategoryId;
 import com.unibuc.fmi.eventful.repository.*;
 import com.unibuc.fmi.eventful.utils.FileUploadUtils;
 import jakarta.mail.MessagingException;
@@ -44,6 +44,7 @@ public class EventService {
     final EventRepository eventRepository;
     final OrganiserRepository organiserRepository;
     final SeatsCategoryRepository seatsCategoryRepository;
+    final StandingCategoryRepository standingCategoryRepository;
     final TicketPhaseRepository ticketPhaseRepository;
     final SendEmailService sendEmailService;
     final EventMapper eventMapper;
@@ -80,17 +81,24 @@ public class EventService {
         event = eventRepository.save(event);
 
         if (location instanceof StandingLocation) {
-            var ticketPhases = addEventDto.getTicketPhases();
-            if (ticketPhases == null || ticketPhases.isEmpty()) {
-                throw new BadRequestException("Ticket phases must be provided for this kind of event!");
+            var standingCategories = addEventDto.getStandingCategories();
+            if (standingCategories == null || standingCategories.isEmpty()) {
+                throw new BadRequestException("At least one standing category must be provided for this kind of event!");
             }
 
-            for (var ticketPhaseDto : ticketPhases) {
-                var ticketPhaseId = new TicketPhaseId(addEventDto.getLocationId(), event.getId(), ticketPhaseDto.getName());
-                var ticketPhase = new TicketPhase(ticketPhaseId,
-                        computePrice(ticketPhaseDto.getPrice(), addEventDto.getFeeSupporter()),
-                        ticketPhaseDto.getDateLimit(), (StandingLocation) location, event);
-                ticketPhaseRepository.save(ticketPhase);
+            for (var standingCategoryDto : standingCategories) {
+                var standingCategoryId = new StandingCategoryId(addEventDto.getLocationId(), event.getId(),
+                        standingCategoryDto.getName());
+                var standingCategory = new StandingCategory(standingCategoryId, standingCategoryDto.getCapacity(),
+                        (StandingLocation) location, event);
+                standingCategory = standingCategoryRepository.save(standingCategory);
+
+                for (var ticketPhaseDto : standingCategoryDto.getTicketPhases()) {
+                    var ticketPhase = new TicketPhase(ticketPhaseDto.getName(),
+                            computePrice(ticketPhaseDto.getPrice(), addEventDto.getFeeSupporter()),
+                            ticketPhaseDto.getDateLimit(), standingCategory);
+                    ticketPhaseRepository.save(ticketPhase);
+                }
             }
         } else if (location instanceof SeatedLocation) {
             var categoriesPrices = addEventDto.getCategoriesPrices();

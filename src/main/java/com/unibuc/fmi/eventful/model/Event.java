@@ -58,7 +58,7 @@ public class Event {
     private List<CategoryPrice> categoryPrices;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
-    private List<TicketPhase> ticketPhases;
+    private List<StandingCategory> standingCategories;
 
     public LocalDateTime getStartDateWithPreparationTime() {
         return startDate.minusMinutes(preparationTime);
