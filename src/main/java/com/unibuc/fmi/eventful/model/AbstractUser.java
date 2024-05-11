@@ -19,7 +19,7 @@ import java.util.UUID;
 public abstract class AbstractUser {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.TABLE)
     protected Long id;
 
     protected String firstName;

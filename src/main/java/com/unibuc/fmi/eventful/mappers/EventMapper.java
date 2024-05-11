@@ -9,6 +9,6 @@ import org.mapstruct.Mapping;
 public interface EventMapper {
 
     @Mapping(target = "categoryPrices", ignore = true)
-    @Mapping(target = "ticketPhases", ignore = true)
+    @Mapping(target = "standingCategories", ignore = true)
     Event addEventDtoToEvent(AddEventDto addEventDto);
 }

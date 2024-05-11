@@ -1,27 +1,26 @@
 package com.unibuc.fmi.eventful.model;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.util.List;
-
 @Data
 @Entity
 @SuperBuilder
 @NoArgsConstructor
-@Table(name = "users")
+@Table(name = "standing_tickets")
 @EqualsAndHashCode(callSuper = true)
-public class User extends AbstractUser {
+public class StandingTicket extends AbstractTicket {
 
-    @OneToMany(mappedBy = "user")
-    private List<Order> orders;
+    @ManyToOne
+    private TicketPhase ticketPhase;
 
-    public User(String firstName, String lastName, String email, String password) {
-        super(firstName, lastName, email, password);
+    public StandingTicket(TicketPhase ticketPhase) {
+        super();
+        this.ticketPhase = ticketPhase;
     }
 }

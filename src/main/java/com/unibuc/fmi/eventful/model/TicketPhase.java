@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @Entity
@@ -28,6 +29,9 @@ public class TicketPhase {
 
     @ManyToOne
     private StandingCategory standingCategory;
+
+    @OneToMany(mappedBy = "ticketPhase", fetch = FetchType.EAGER)
+    private List<StandingTicket> standingTickets;
 
     public TicketPhase(String name, double price, LocalDate dateLimit, StandingCategory standingCategory) {
         this.name = name;
