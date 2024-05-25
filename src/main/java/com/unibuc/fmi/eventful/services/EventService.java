@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -156,9 +157,13 @@ public class EventService {
             event.setRejectionReason(null);
         }
         event = eventRepository.save(event);
-        sendEmailService.sendEventStatusChanged(event);
+        sendEmailService.sendEventStatusChangedEmail(event);
 
         return event;
+    }
+
+    public String getEventLogoLocation(Event event) {
+        return Paths.get(imagesDirectory, event.getLogo()).toString();
     }
 
     private double computePrice(int price, FeeSupporter feeSupporter) {

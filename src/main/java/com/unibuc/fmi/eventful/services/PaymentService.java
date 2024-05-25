@@ -1,5 +1,6 @@
 package com.unibuc.fmi.eventful.services;
 
+import com.google.zxing.WriterException;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Charge;
@@ -21,6 +22,7 @@ import com.unibuc.fmi.eventful.repository.OrderRepository;
 import com.unibuc.fmi.eventful.repository.PaymentIntentRepository;
 import com.unibuc.fmi.eventful.repository.PaymentSessionRepository;
 import jakarta.annotation.PostConstruct;
+import jakarta.mail.MessagingException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -29,6 +31,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.util.List;
 
 @Slf4j
@@ -54,6 +57,7 @@ public class PaymentService {
     final OrderRepository orderRepository;
     final PaymentIntentRepository paymentIntentRepository;
     final PaymentSessionRepository paymentSessionRepository;
+    final TicketService ticketService;
 
     @PostConstruct
     public void init() {
@@ -75,7 +79,7 @@ public class PaymentService {
 
         SessionCreateParams.LineItem.PriceData priceData =
                 SessionCreateParams.LineItem.PriceData.builder()
-                        .setUnitAmount(paymentRequest.getAmount())
+                        .setUnitAmount((long) (order.getTotal() * 100))
                         .setCurrency(CURRENCY)
                         .setProductData(productData)
                         .build();
@@ -112,7 +116,8 @@ public class PaymentService {
     }
 
     @Transactional
-    public void handleWebhook(String payload, String signatureHeader) throws StripeException {
+    public void handleWebhook(String payload, String signatureHeader) throws StripeException,
+            IOException, WriterException, MessagingException {
         com.stripe.model.Event event;
 
         log.info("[STRIPE] Received webhook from Stripe");
@@ -167,6 +172,11 @@ public class PaymentService {
                 }
             }
             paymentSessionRepository.save(sessionDb);
+
+            var order = orderRepository.findByPaymentSessionId(sessionDb.getId());
+            if (order.isPresent()) {
+                ticketService.generatePdfTicketsAndSendOrderSummaryEmail(order.get());
+            }
 
         } else if (List.of("payment_intent.canceled", "payment_intent.created", "payment_intent.payment_failed",
                 "payment_intent.processing", "payment_intent.succeeded").contains(event.getType())) {

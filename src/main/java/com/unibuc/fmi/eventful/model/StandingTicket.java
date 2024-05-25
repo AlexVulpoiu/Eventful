@@ -23,4 +23,9 @@ public class StandingTicket extends AbstractTicket {
         super();
         this.ticketPhase = ticketPhase;
     }
+
+    @Override
+    public String getName() {
+        return String.format("Category %s, %s selling phase", ticketPhase.getStandingCategory().getId().getName(), ticketPhase.getName());
+    }
 }

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title>Seated Ticket</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+        <style>
+            body {
+                font-family: "Roboto Light", sans-serif;
+                padding: 0;
+                width: 100%;
+                max-width: 100%;
+                margin: 0;
+            }
+            .container {
+                padding: 20px;
+            }
+            .separator1 {
+                height: 5px;
+                background-color: #1C70EC;
+                margin: 20px 0;
+            }
+            .separator2 {
+                height: 5px;
+                background-color: #FE7100;
+                margin: 20px 0;
+            }
+            .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+            .header-left {
+                text-align: left;
+                flex: 1;
+            }
+            .header-right {
+                text-align: right;
+            }
+            .content {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                height: 300px;
+            }
+            .barcode, .qrcode, .logo {
+                flex: 1;
+                text-align: center;
+            }
+            .details {
+                margin-top: 20px;
+                display: flex;
+                flex-wrap: wrap;
+            }
+            .details > div {
+                width: 50%;
+                box-sizing: border-box;
+                padding: 5px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="container">
+            <div class="separator1"></div>
+
+            <div class="header">
+                <div class="header-left">
+                    <h2>Order ID: <span th:text="${order.id}">12345</span></h2>
+                    <h2>Customer: <span th:text="${order.user.getFullName()}">John Doe</span></h2>
+                </div>
+
+                <div class="header-right">
+                    <img th:src="@{src/main/resources/static/images/eventful-logo.png}" alt="Eventful Logo" width="200" height="125">
+                </div>
+            </div>
+
+            <div class="separator2"></div>
+
+            <div class="content">
+                <div class="logo">
+                    <img th:src="@{${eventLogo}}" alt="Event Logo" height="250" width="auto">
+                </div>
+
+                <div class="qrcode">
+                    <img th:src="@{${qrBarcode}}" alt="QR Code" width="250" height="250">
+                </div>
+            </div>
+
+            <div class="separator2"></div>
+
+            <div class="details">
+                <div>Event: <span th:text="${order.event.name}">Example event</span></div>
+                <div>Price: <span th:text="${ticket.categoryPrice.price}">100.00</span> RON</div>
+                <div>Date & Time: <span th:text="${#temporals.format(order.event.startDate, 'dd-MM-yyyy HH:mm')}">2024-05-18 18:00</span></div>
+                <div>Category: <span th:text="${ticket.categoryPrice.category.name}">VIP</span></div>
+                <div>Location: <span th:text="${order.event.location.name}">Example Arena</span></div>
+                <div>Row: <span th:text="${ticket.numberOfRow}">8</span></div>
+                <div>Address: <span th:text="${order.event.location.getFullAddressDetails()}">Example Street 42, City, Country</span></div>
+                <div>Seat: <span th:text="${ticket.seat}">12</span></div>
+            </div>
+
+            <div class="separator1"></div>
+
+            <div class="barcode">
+                <img th:src="@{${code128Barcode}}" alt="Barcode" width="650" height="150">
+            </div>
+        </div>
+    </body>
+</html>

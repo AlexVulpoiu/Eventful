@@ -4,8 +4,9 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
+import org.apache.commons.lang3.RandomStringUtils;
 
-import java.util.UUID;
+import java.security.SecureRandom;
 
 @Data
 @Entity
@@ -19,12 +20,14 @@ public abstract class AbstractTicket {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     protected Long id;
 
-    protected UUID externalId;
+    protected String externalId;
 
     protected boolean validated;
 
     protected AbstractTicket() {
-        this.externalId = UUID.randomUUID();
+        this.externalId = RandomStringUtils.random(16, 0, 0, true, true, null, new SecureRandom());
         this.validated = false;
     }
+
+    public abstract String getName();
 }

@@ -29,4 +29,9 @@ public class SeatedTicket extends AbstractTicket {
         this.seat = seat;
         this.categoryPrice = categoryPrice;
     }
+
+    @Override
+    public String getName() {
+        return String.format("Category %s, Row %d, Seat %d", categoryPrice.getCategory().getName(), numberOfRow, seat);
+    }
 }

@@ -31,4 +31,8 @@ public abstract class AbstractLocation {
 
     @OneToMany(mappedBy = "location")
     List<Event> events;
+
+    public String getFullAddressDetails() {
+        return String.join(", ", address, city, country);
+    }
 }
