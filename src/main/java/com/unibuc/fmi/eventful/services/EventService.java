@@ -205,7 +205,7 @@ public class EventService {
 
         vEvent.add(tzId);
         vEvent.add(new Uid(String.valueOf(event.getId())));
-        vEvent.add(new Location(event.getLocation().getFullAddressDetails()));
+        vEvent.add(new Location(event.getLocation().getFullAddressWithName()));
 
         calendar.add(vEvent);
 
