@@ -85,7 +85,7 @@ public class SendEmailService {
         javaMailSender.send(message);
     }
 
-    public void sendOrderSummaryEmail(Order order, Map<String, ByteArrayDataSource> pdfTickets)
+    public void sendOrderSummaryEmail(Order order, Map<String, ByteArrayDataSource> pdfTickets, ByteArrayDataSource ics)
             throws MessagingException, UnsupportedEncodingException {
         String toAddress = order.getUser().getEmail();
         String subject = "Eventful order " + order.getId() + " summary";
@@ -178,6 +178,12 @@ public class SendEmailService {
                 throw new RuntimeException(e);
             }
         });
+
+        try {
+            helper.addAttachment("event.ics", ics);
+        } catch (MessagingException e) {
+            throw new RuntimeException(e);
+        }
 
         javaMailSender.send(message);
     }

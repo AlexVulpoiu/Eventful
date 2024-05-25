@@ -143,10 +143,10 @@ public class TicketService {
             Document document = new Document(pdfDocument);
             document.setMargins(0, 0, 0, 0);
             HtmlConverter.convertToPdf(new ByteArrayInputStream(parseTicketTemplate(order, ticket).getBytes()), pdfDocument, converterProperties);
-            pdfTickets.put(ticket.getExternalId(), new ByteArrayDataSource(pdfStream.toByteArray(), "application/pdf"));
+            pdfTickets.put(ticket.getExternalId() + ".pdf", new ByteArrayDataSource(pdfStream.toByteArray(), "application/pdf"));
             document.close();
         }
-        sendEmailService.sendOrderSummaryEmail(order, pdfTickets);
+        sendEmailService.sendOrderSummaryEmail(order, pdfTickets, eventService.generateIcsForEvent(order.getEvent()));
     }
 
     public String parseTicketTemplate(Order order, AbstractTicket ticket) throws IOException, WriterException {

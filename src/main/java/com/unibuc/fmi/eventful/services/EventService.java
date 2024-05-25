@@ -14,19 +14,33 @@ import com.unibuc.fmi.eventful.model.ids.StandingCategoryId;
 import com.unibuc.fmi.eventful.repository.*;
 import com.unibuc.fmi.eventful.utils.FileUploadUtils;
 import jakarta.mail.MessagingException;
+import jakarta.mail.util.ByteArrayDataSource;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import net.fortuna.ical4j.data.CalendarOutputter;
+import net.fortuna.ical4j.model.Calendar;
+import net.fortuna.ical4j.model.TimeZoneRegistry;
+import net.fortuna.ical4j.model.TimeZoneRegistryFactory;
+import net.fortuna.ical4j.model.component.VEvent;
+import net.fortuna.ical4j.model.property.Location;
+import net.fortuna.ical4j.model.property.ProdId;
+import net.fortuna.ical4j.model.property.TzId;
+import net.fortuna.ical4j.model.property.Uid;
+import net.fortuna.ical4j.model.property.immutable.ImmutableCalScale;
+import net.fortuna.ical4j.model.property.immutable.ImmutableVersion;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.TimeZone;
 import java.util.UUID;
 
 @Service
@@ -175,5 +189,30 @@ public class EventService {
                 .filter(event -> startDate.isBefore(event.getEndDateWithPreparationTime())
                         && endDate.isAfter(event.getStartDateWithPreparationTime()))
                 .toList().isEmpty();
+    }
+
+    public ByteArrayDataSource generateIcsForEvent(Event event) throws IOException {
+        Calendar calendar = new Calendar();
+        calendar.add(new ProdId("-//Eventful//iCal4j 1.0//EN"));
+        calendar.add(ImmutableVersion.VERSION_2_0);
+        calendar.add(ImmutableCalScale.GREGORIAN);
+
+        VEvent vEvent = new VEvent(event.getStartDate(), event.getEndDate(), event.getName());
+
+        TimeZoneRegistry registry = TimeZoneRegistryFactory.getInstance().createRegistry();
+        TimeZone timeZone = registry.getTimeZone("Europe/Bucharest");
+        TzId tzId = new TzId(timeZone.getID());
+
+        vEvent.add(tzId);
+        vEvent.add(new Uid(String.valueOf(event.getId())));
+        vEvent.add(new Location(event.getLocation().getFullAddressDetails()));
+
+        calendar.add(vEvent);
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        CalendarOutputter calendarOutputter = new CalendarOutputter();
+        calendarOutputter.output(calendar, baos);
+
+        return new ByteArrayDataSource(baos.toByteArray(), "text/calendar");
     }
 }
