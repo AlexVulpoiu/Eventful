@@ -168,6 +168,30 @@ public class SendEmailService {
         totalRow = totalRow.replace("[[TOTAL]]", String.valueOf(order.getTotal()));
         tableBody.append(totalRow);
 
+        if (order.getDiscountPoints() > 0) {
+            String discountRow = """
+                <tr>
+                    <td style="border:1px solid black; border-collapse:collapse;">DISCOUNT</td>
+                    <td style="border:1px solid black; border-collapse:collapse;">1</td>
+                    <td style="border:1px solid black; border-collapse:collapse;">[[DISCOUNT_TOTAL]]</td>
+                    <td style="border:1px solid black; border-collapse:collapse;">[[DISCOUNT_TOTAL]]</td>
+                </tr>
+                """;
+            discountRow = discountRow.replace("[[DISCOUNT_TOTAL]]", String.valueOf(-1.0 * order.getDiscountPoints() / 10.0));
+            tableBody.append(discountRow);
+        }
+
+        String paymentTotalRow = """
+                <tr>
+                    <td style="border:1px solid black; border-collapse:collapse;"><span style="font-weight:bold;">PAYMENT TOTAL</span></td>
+                    <td style="border:1px solid black; border-collapse:collapse;"></td>
+                    <td style="border:1px solid black; border-collapse:collapse;"></td>
+                    <td style="border:1px solid black; border-collapse:collapse;"><span style="font-weight:bold;">[[PAYMENT_TOTAL]]</span></td>
+                </tr>
+                """;
+        paymentTotalRow = paymentTotalRow.replace("[[PAYMENT_TOTAL]]", String.valueOf(order.getPaymentAmount()));
+        tableBody.append(paymentTotalRow);
+
         content = content.replace("[[TABLE_BODY]]", tableBody);
         helper.setText(content, true);
 

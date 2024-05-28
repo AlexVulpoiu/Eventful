@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -45,6 +46,8 @@ public class Event {
 
     private String rejectionReason;
 
+    private double rating = 0.0;
+
     @ManyToOne
     private AbstractLocation location;
 
@@ -54,11 +57,14 @@ public class Event {
     @ManyToOne
     private Organiser organiser;
 
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "event", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private List<CategoryPrice> categoryPrices;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
     private List<StandingCategory> standingCategories;
+
+    @OneToMany(mappedBy = "event", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private List<Review> reviews = new ArrayList<>();
 
     public LocalDateTime getStartDateWithPreparationTime() {
         return startDate.minusMinutes(preparationTime);
@@ -66,5 +72,11 @@ public class Event {
 
     public LocalDateTime getEndDateWithPreparationTime() {
         return endDate.plusMinutes(preparationTime);
+    }
+
+    public void addReview(Review review) {
+        this.reviews.add(review);
+        this.reviews.stream().mapToDouble(Review::getRating).average()
+                .ifPresentOrElse(d -> this.rating = Math.floor(d * 100) / 100, () -> this.rating = 0.0);
     }
 }

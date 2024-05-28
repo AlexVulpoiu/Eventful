@@ -2,12 +2,10 @@ package com.unibuc.fmi.eventful.controllers;
 
 import com.google.zxing.WriterException;
 import com.stripe.exception.StripeException;
-import com.unibuc.fmi.eventful.dto.request.payment.PaymentRequest;
 import com.unibuc.fmi.eventful.dto.response.payment.PaymentResponse;
 import com.unibuc.fmi.eventful.security.services.UserDetailsImpl;
 import com.unibuc.fmi.eventful.services.PaymentService;
 import jakarta.mail.MessagingException;
-import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -25,11 +23,10 @@ public class PaymentController {
 
     PaymentService paymentService;
 
-    @PostMapping
+    @PostMapping("/{orderId}")
     @PreAuthorize("hasAuthority('USER')")
-    public PaymentResponse initiatePayment(@Valid @RequestBody PaymentRequest paymentRequest,
-                                           @AuthenticationPrincipal UserDetailsImpl principal) {
-        return paymentService.initiatePayment(paymentRequest, principal.getId());
+    public PaymentResponse initiatePayment(@PathVariable long orderId, @AuthenticationPrincipal UserDetailsImpl principal) {
+        return paymentService.initiatePayment(orderId, principal.getId());
     }
 
     @PostMapping("/webhook")

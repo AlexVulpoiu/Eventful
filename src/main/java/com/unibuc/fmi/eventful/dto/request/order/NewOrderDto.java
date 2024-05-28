@@ -1,5 +1,6 @@
 package com.unibuc.fmi.eventful.dto.request.order;
 
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,6 +16,9 @@ import java.util.Map;
 public class NewOrderDto {
 
     private long eventId;
+
+    @Min(0)
+    private int discountPoints;
 
     private Map<String, Integer> standingTickets;
 

@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,13 +29,15 @@ public class Order {
 
     private double total;
 
+    private int discountPoints;
+
     @ManyToOne
     private User user;
 
     @ManyToOne
     private Event event;
 
-    @OneToMany
+    @OneToMany(mappedBy = "order", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private List<AbstractTicket> tickets;
 
     @OneToOne
@@ -46,5 +49,13 @@ public class Order {
         this.orderDate = LocalDateTime.now();
         this.externalId = UUID.randomUUID();
         this.total = 0.0;
+    }
+
+    public String getName() {
+        return "Eventful\nOrder #" + id + " from " + DateTimeFormatter.ofPattern("dd/MM/yyyy").format(orderDate) + " for " + event.getName();
+    }
+
+    public double getPaymentAmount() {
+        return total - 1.0 * discountPoints / 10.0;
     }
 }

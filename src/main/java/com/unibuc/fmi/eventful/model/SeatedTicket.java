@@ -23,8 +23,8 @@ public class SeatedTicket extends AbstractTicket {
     @ManyToOne
     private CategoryPrice categoryPrice;
 
-    public SeatedTicket(int numberOfRow, int seat, CategoryPrice categoryPrice) {
-        super();
+    public SeatedTicket(Order order, int numberOfRow, int seat, CategoryPrice categoryPrice) {
+        super(order);
         this.numberOfRow = numberOfRow;
         this.seat = seat;
         this.categoryPrice = categoryPrice;

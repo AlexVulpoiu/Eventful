@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -21,6 +22,8 @@ public abstract class Organiser extends AbstractUser {
 
     protected String commerceRegistrationNumber;
 
+    protected double rating = 0.0;
+
     @OneToOne(cascade = CascadeType.ALL)
     protected Address address;
 
@@ -28,8 +31,13 @@ public abstract class Organiser extends AbstractUser {
     protected BankAccount bankAccount;
 
     @OneToMany(mappedBy = "organiser")
-    protected List<Event> events;
+    protected List<Event> events = new ArrayList<>();
 
     @OneToMany(mappedBy = "organiser")
-    protected List<CharitableCause> charitableCauses;
+    protected List<CharitableCause> charitableCauses = new ArrayList<>();
+
+    public void updateRating() {
+        this.events.stream().filter(e -> e.getRating() > 0).mapToDouble(Event::getRating).average()
+                .ifPresentOrElse(d -> this.rating = Math.floor(d * 100) / 100, () -> this.rating = 0.0);
+    }
 }

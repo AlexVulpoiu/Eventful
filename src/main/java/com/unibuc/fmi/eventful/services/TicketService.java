@@ -22,7 +22,10 @@ import com.unibuc.fmi.eventful.model.SeatedTicket;
 import com.unibuc.fmi.eventful.model.StandingTicket;
 import com.unibuc.fmi.eventful.model.ids.CategoryPriceId;
 import com.unibuc.fmi.eventful.model.ids.StandingCategoryId;
-import com.unibuc.fmi.eventful.repository.*;
+import com.unibuc.fmi.eventful.repository.CategoryPriceRepository;
+import com.unibuc.fmi.eventful.repository.SeatedTicketRepository;
+import com.unibuc.fmi.eventful.repository.SeatsCategoryRepository;
+import com.unibuc.fmi.eventful.repository.StandingCategoryRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
 import jakarta.mail.util.ByteArrayDataSource;
@@ -58,7 +61,6 @@ public class TicketService {
     final CategoryPriceRepository categoryPriceRepository;
     final SeatedTicketRepository seatedTicketRepository;
     final SeatsCategoryRepository seatsCategoryRepository;
-    final StandingTicketRepository standingTicketRepository;
     final StandingCategoryRepository standingCategoryRepository;
     final EventService eventService;
     final SendEmailService sendEmailService;
@@ -85,7 +87,7 @@ public class TicketService {
 
     @Transactional
     public List<AbstractTicket> generateStandingTicketsByEventAndLocationAndCategory(int numberOfTickets, long locationId, long eventId,
-                                                                                     String category) {
+                                                                                     String category, Order order) {
 
         var standingCategoryId = new StandingCategoryId(locationId, eventId, category);
         var standingCategory = standingCategoryRepository.findById(standingCategoryId)
@@ -99,15 +101,15 @@ public class TicketService {
         var currentTicketPhase = standingCategory.getCurrentTicketPhase();
         List<AbstractTicket> tickets = new ArrayList<>();
         for (int i = 0; i < numberOfTickets; i++) {
-            var standingTicket = new StandingTicket(currentTicketPhase);
-            tickets.add(standingTicketRepository.save(standingTicket));
+            tickets.add(new StandingTicket(order, currentTicketPhase));
         }
 
         return tickets;
     }
 
     @Transactional
-    public List<AbstractTicket> generateSeatedTicketsByEvent(List<NewOrderDto.SeatDetails> seatedTicketsDetails, long eventId) {
+    public List<AbstractTicket> generateSeatedTicketsByEvent(List<NewOrderDto.SeatDetails> seatedTicketsDetails,
+                                                             long eventId, Order order) {
         List<AbstractTicket> tickets = new ArrayList<>();
 
         for (var seatDetails : seatedTicketsDetails) {
@@ -127,8 +129,7 @@ public class TicketService {
                 throw new BadRequestException("Some of the selected seats are not available!");
             }
 
-            var seatedTicket = new SeatedTicket(seatDetails.getRow(), seatDetails.getSeat(), categoryPrice);
-            tickets.add(seatedTicketRepository.save(seatedTicket));
+            tickets.add(new SeatedTicket(order, seatDetails.getRow(), seatDetails.getSeat(), categoryPrice));
         }
 
         return tickets;

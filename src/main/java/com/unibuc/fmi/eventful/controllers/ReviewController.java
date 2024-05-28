@@ -1,9 +1,9 @@
 package com.unibuc.fmi.eventful.controllers;
 
-import com.unibuc.fmi.eventful.dto.OrderDto;
-import com.unibuc.fmi.eventful.dto.request.order.NewOrderDto;
+import com.unibuc.fmi.eventful.dto.ReviewDto;
+import com.unibuc.fmi.eventful.dto.request.event.AddReviewDto;
 import com.unibuc.fmi.eventful.security.services.UserDetailsImpl;
-import com.unibuc.fmi.eventful.services.OrderService;
+import com.unibuc.fmi.eventful.services.ReviewService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -17,15 +17,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/orders")
+@RequestMapping("/reviews")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class OrderController {
+public class ReviewController {
 
-    OrderService orderService;
+    ReviewService reviewService;
 
     @PostMapping
     @PreAuthorize("hasAuthority('USER')")
-    public OrderDto placeOrder(@Valid @RequestBody NewOrderDto newOrderDto, @AuthenticationPrincipal UserDetailsImpl principal) {
-        return orderService.placeOrder(newOrderDto, principal.getId());
+    public ReviewDto addReview(@Valid @RequestBody AddReviewDto addReviewDto,
+                               @AuthenticationPrincipal UserDetailsImpl principal) {
+        return reviewService.addReview(addReviewDto, principal.getId());
     }
 }

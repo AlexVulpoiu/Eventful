@@ -18,10 +18,25 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class User extends AbstractUser {
 
+    private int xp = 0;
+
+    private int availablePoints = 0;
+
     @OneToMany(mappedBy = "user")
     private List<Order> orders;
 
     public User(String firstName, String lastName, String email, String password) {
         super(firstName, lastName, email, password);
+        this.xp = 100;
+        this.availablePoints = 100;
+    }
+
+    public void addPoints(int points) {
+        this.xp += points;
+        this.availablePoints += points;
+    }
+
+    public void usePoints(int points) {
+        this.availablePoints -= points;
     }
 }

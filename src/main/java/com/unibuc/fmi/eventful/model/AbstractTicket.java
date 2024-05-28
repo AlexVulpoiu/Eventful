@@ -24,9 +24,17 @@ public abstract class AbstractTicket {
 
     protected boolean validated;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    private Order order;
+
     protected AbstractTicket() {
+
+    }
+
+    protected AbstractTicket(Order order) {
         this.externalId = RandomStringUtils.random(16, 0, 0, true, true, null, new SecureRandom());
         this.validated = false;
+        this.order = order;
     }
 
     public abstract String getName();

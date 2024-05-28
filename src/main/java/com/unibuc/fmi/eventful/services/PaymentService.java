@@ -9,7 +9,6 @@ import com.stripe.model.StripeObject;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 import com.stripe.param.checkout.SessionCreateParams;
-import com.unibuc.fmi.eventful.dto.request.payment.PaymentRequest;
 import com.unibuc.fmi.eventful.dto.response.payment.PaymentResponse;
 import com.unibuc.fmi.eventful.enums.ChargeStatus;
 import com.unibuc.fmi.eventful.enums.PaymentIntentStatus;
@@ -21,6 +20,7 @@ import com.unibuc.fmi.eventful.model.PaymentSession;
 import com.unibuc.fmi.eventful.repository.OrderRepository;
 import com.unibuc.fmi.eventful.repository.PaymentIntentRepository;
 import com.unibuc.fmi.eventful.repository.PaymentSessionRepository;
+import com.unibuc.fmi.eventful.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
 import lombok.AccessLevel;
@@ -57,6 +57,7 @@ public class PaymentService {
     final OrderRepository orderRepository;
     final PaymentIntentRepository paymentIntentRepository;
     final PaymentSessionRepository paymentSessionRepository;
+    final UserRepository userRepository;
     final TicketService ticketService;
 
     @PostConstruct
@@ -65,21 +66,21 @@ public class PaymentService {
     }
 
     @Transactional
-    public PaymentResponse initiatePayment(PaymentRequest paymentRequest, Long userId) {
-        var order = orderRepository.findById(paymentRequest.getOrderId())
-                .orElseThrow(() -> new NotFoundException("Order with id " + paymentRequest.getOrderId() + " not found!"));
+    public PaymentResponse initiatePayment(long orderId, Long userId) {
+        var order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order with id " + orderId + " not found!"));
         if (!order.getUser().getId().equals(userId)) {
             throw new ForbiddenException("You are not allowed to perform this operation!");
         }
 
         SessionCreateParams.LineItem.PriceData.ProductData productData =
                 SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                        .setName(paymentRequest.getOrderName())
+                        .setName(order.getName())
                         .build();
 
         SessionCreateParams.LineItem.PriceData priceData =
                 SessionCreateParams.LineItem.PriceData.builder()
-                        .setUnitAmount((long) (order.getTotal() * 100))
+                        .setUnitAmount((long) (order.getPaymentAmount() * 100))
                         .setCurrency(CURRENCY)
                         .setProductData(productData)
                         .build();
@@ -93,8 +94,8 @@ public class PaymentService {
         SessionCreateParams params =
                 SessionCreateParams.builder()
                         .setMode(SessionCreateParams.Mode.PAYMENT)
-                        .setSuccessUrl(successUrl + paymentRequest.getOrderId())
-                        .setCancelUrl(cancelUrl + paymentRequest.getOrderId())
+                        .setSuccessUrl(successUrl + orderId)
+                        .setCancelUrl(cancelUrl + orderId)
                         .addLineItem(lineItem)
                         .build();
 
@@ -174,8 +175,11 @@ public class PaymentService {
             paymentSessionRepository.save(sessionDb);
 
             var order = orderRepository.findByPaymentSessionId(sessionDb.getId());
-            if (order.isPresent()) {
+            if (order.isPresent() && "checkout.session.completed".equals(event.getType())) {
                 ticketService.generatePdfTicketsAndSendOrderSummaryEmail(order.get());
+                var user = order.get().getUser();
+                user.addPoints((int) (order.get().getTotal() / 5));
+                userRepository.save(user);
             }
 
         } else if (List.of("payment_intent.canceled", "payment_intent.created", "payment_intent.payment_failed",
