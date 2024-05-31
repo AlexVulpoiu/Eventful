@@ -63,6 +63,7 @@ public class TicketService {
     final SeatsCategoryRepository seatsCategoryRepository;
     final StandingCategoryRepository standingCategoryRepository;
     final EventService eventService;
+    final S3Service s3Service;
     final SendEmailService sendEmailService;
     final TemplateEngine templateEngine;
     Code128Writer code128Writer;
@@ -144,7 +145,9 @@ public class TicketService {
             Document document = new Document(pdfDocument);
             document.setMargins(0, 0, 0, 0);
             HtmlConverter.convertToPdf(new ByteArrayInputStream(parseTicketTemplate(order, ticket).getBytes()), pdfDocument, converterProperties);
-            pdfTickets.put(ticket.getExternalId() + ".pdf", new ByteArrayDataSource(pdfStream.toByteArray(), "application/pdf"));
+            var pdfName = ticket.getExternalId() + ".pdf";
+            pdfTickets.put(pdfName, new ByteArrayDataSource(pdfStream.toByteArray(), "application/pdf"));
+            s3Service.uploadFile(S3Service.TICKETS_FOLDER, pdfName, new ByteArrayInputStream(pdfStream.toByteArray()));
             document.close();
         }
         sendEmailService.sendOrderSummaryEmail(order, pdfTickets, eventService.generateIcsForEvent(order.getEvent()));
@@ -156,7 +159,7 @@ public class TicketService {
         StandingTicket standingTicket = ticket instanceof StandingTicket ? (StandingTicket) ticket : null;
         context.setVariable("ticket", seatedTicket != null ? seatedTicket : standingTicket);
         context.setVariable("order", order);
-        context.setVariable("eventLogo", eventService.getEventLogoLocation(order.getEvent()));
+        context.setVariable("eventLogo", eventService.getEventLogoUrl(order.getEvent()));
         context.setVariable("code128Barcode", generateCode128Barcode(ticket));
         context.setVariable("qrBarcode", generateQRBarcode(ticket));
         return templateEngine.process(ticket instanceof SeatedTicket ? "templates/seated_ticket" : "templates/standing_ticket", context);

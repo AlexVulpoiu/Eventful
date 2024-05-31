@@ -12,7 +12,6 @@ import com.unibuc.fmi.eventful.model.*;
 import com.unibuc.fmi.eventful.model.ids.CategoryPriceId;
 import com.unibuc.fmi.eventful.model.ids.StandingCategoryId;
 import com.unibuc.fmi.eventful.repository.*;
-import com.unibuc.fmi.eventful.utils.FileUploadUtils;
 import jakarta.mail.MessagingException;
 import jakarta.mail.util.ByteArrayDataSource;
 import lombok.AccessLevel;
@@ -37,7 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.nio.file.Paths;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.TimeZone;
@@ -48,8 +47,6 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EventService {
 
-    @Value("${eventful.app.images.directory}")
-    private String imagesDirectory;
     @Value("${eventful.app.fee}")
     private int fee;
 
@@ -61,6 +58,7 @@ public class EventService {
     final SeatsCategoryRepository seatsCategoryRepository;
     final StandingCategoryRepository standingCategoryRepository;
     final TicketPhaseRepository ticketPhaseRepository;
+    final S3Service s3Service;
     final SendEmailService sendEmailService;
     final EventMapper eventMapper;
 
@@ -144,12 +142,11 @@ public class EventService {
         }
 
         if (Optional.ofNullable(logo).isPresent()) {
-            String fileName = Optional.ofNullable(event.getLogo()).isPresent()
-                    ? event.getLogo() : String.valueOf(UUID.randomUUID());
             String logoName = logo.getOriginalFilename();
             String extension = logoName != null ? logoName.substring(logoName.lastIndexOf('.') + 1) : "";
-            fileName = String.join(".", fileName, extension);
-            FileUploadUtils.uploadFile(imagesDirectory, fileName, logo);
+            String fileName = Optional.ofNullable(event.getLogo()).isPresent()
+                    ? event.getLogo() : String.join(".", String.valueOf(UUID.randomUUID()), extension);
+            s3Service.uploadFile(S3Service.EVENTS_FOLDER, fileName, logo.getInputStream());
             event.setLogo(fileName);
         }
         eventRepository.save(event);
@@ -176,8 +173,8 @@ public class EventService {
         return event;
     }
 
-    public String getEventLogoLocation(Event event) {
-        return Paths.get(imagesDirectory, event.getLogo()).toString();
+    public URL getEventLogoUrl(Event event) {
+        return s3Service.getObjectUrl(S3Service.EVENTS_FOLDER, event.getLogo());
     }
 
     private double computePrice(int price, FeeSupporter feeSupporter) {
