@@ -1,5 +1,6 @@
 package com.unibuc.fmi.eventful.controllers;
 
+import com.unibuc.fmi.eventful.dto.LocationDetailsDto;
 import com.unibuc.fmi.eventful.dto.SeatedLocationDto;
 import com.unibuc.fmi.eventful.dto.StandingLocationDto;
 import com.unibuc.fmi.eventful.dto.request.location.AddSeatedLocationDto;
@@ -24,14 +25,14 @@ public class LocationController {
 
     @PostMapping("/standing")
     @PreAuthorize("hasAnyAuthority('MODERATOR', 'ADMIN')")
-    public void addStandingLocation(@Valid @RequestBody AddStandingLocationDto addStandingLocationDto) {
-        locationService.addStandingLocation(addStandingLocationDto);
+    public Long addStandingLocation(@Valid @RequestBody AddStandingLocationDto addStandingLocationDto) {
+        return locationService.addStandingLocation(addStandingLocationDto);
     }
 
     @PostMapping("/seated")
     @PreAuthorize("hasAnyAuthority('MODERATOR', 'ADMIN')")
-    public void addSeatedLocation(@Valid @RequestBody AddSeatedLocationDto addSeatedLocationDto) {
-        locationService.addSeatedLocation(addSeatedLocationDto);
+    public Long addSeatedLocation(@Valid @RequestBody AddSeatedLocationDto addSeatedLocationDto) {
+        return locationService.addSeatedLocation(addSeatedLocationDto);
     }
 
     @GetMapping("/standing")
@@ -44,5 +45,11 @@ public class LocationController {
     @PreAuthorize("isAuthenticated()")
     public List<SeatedLocationDto> getSeatedLocations(@RequestParam(required = false) String search) {
         return locationService.getSeatedLocations(search);
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAuthority('ORGANISER')")
+    public List<LocationDetailsDto> getLocations(@RequestParam(required = false) String search) {
+        return locationService.getLocations(search);
     }
 }

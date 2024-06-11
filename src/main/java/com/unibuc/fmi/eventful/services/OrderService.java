@@ -58,10 +58,10 @@ public class OrderService {
             for (var entry : standingTickets.entrySet()) {
                 tickets.addAll(ticketService.generateStandingTicketsByEventAndLocationAndCategory(entry.getValue(),
                         location.getId(), event.getId(), entry.getKey(), order));
-                total += tickets.stream()
-                        .map(ticket -> ((StandingTicket) ticket).getTicketPhase().getPrice())
-                        .reduce(0.0, Double::sum);
             }
+            total = tickets.stream()
+                    .map(ticket -> ((StandingTicket) ticket).getStandingCategory().getPrice())
+                    .reduce(0.0, Double::sum);
         } else {
             var seatedTicketsDetails = newOrderDto.getSeatedTicketsDetails();
             if (seatedTicketsDetails == null || seatedTicketsDetails.isEmpty()) {

@@ -27,6 +27,7 @@ public class ReviewService {
     UserRepository userRepository;
     ReviewMapper reviewMapper;
 
+    // TODO: refactor logic
     @Transactional
     public ReviewDto addReview(AddReviewDto addReviewDto, long userId) {
         var user = userRepository.findById(userId)

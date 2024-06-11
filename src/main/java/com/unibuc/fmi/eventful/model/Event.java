@@ -42,16 +42,18 @@ public class Event {
     @Enumerated(value = EnumType.STRING)
     private FeeSupporter feeSupporter;
 
-    private int charityPercentage;
+    private int charityPercentage = 0;
 
     private String rejectionReason;
 
     private double rating = 0.0;
 
+    private LocalDateTime updatedAt;
+
     @ManyToOne
     private AbstractLocation location;
 
-    @ManyToOne
+    @OneToOne
     private CharitableCause charitableCause;
 
     @ManyToOne
@@ -67,11 +69,11 @@ public class Event {
     private List<Review> reviews = new ArrayList<>();
 
     public LocalDateTime getStartDateWithPreparationTime() {
-        return startDate.minusMinutes(preparationTime);
+        return startDate.minusHours(preparationTime);
     }
 
     public LocalDateTime getEndDateWithPreparationTime() {
-        return endDate.plusMinutes(preparationTime);
+        return endDate.plusHours(preparationTime);
     }
 
     public void addReview(Review review) {

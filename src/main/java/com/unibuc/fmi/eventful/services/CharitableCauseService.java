@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,7 +43,6 @@ public class CharitableCauseService {
             charitableCauses = charitableCauses.filter((c -> c.getName().toLowerCase().contains(search.toLowerCase())));
         }
 
-        return charitableCauses.sorted(Comparator.comparing(CharitableCause::getEndDate))
-                .map(charitableCauseMapper::charitableCauseToCharitableCauseDto).toList();
+        return charitableCauses.map(charitableCauseMapper::charitableCauseToCharitableCauseDto).toList();
     }
 }

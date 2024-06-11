@@ -36,6 +36,8 @@ public abstract class Organiser extends AbstractUser {
     @OneToMany(mappedBy = "organiser")
     protected List<CharitableCause> charitableCauses = new ArrayList<>();
 
+    public abstract String getOrganiserName();
+
     public void updateRating() {
         this.events.stream().filter(e -> e.getRating() > 0).mapToDouble(Event::getRating).average()
                 .ifPresentOrElse(d -> this.rating = Math.floor(d * 100) / 100, () -> this.rating = 0.0);

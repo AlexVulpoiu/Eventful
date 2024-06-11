@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -15,4 +16,9 @@ public interface SeatedTicketRepository extends JpaRepository<SeatedTicket, Long
             " WHERE st.numberOfRow = :row AND st.seat = :seat AND st.categoryPrice.category.id = :categoryId" +
             "    AND st.categoryPrice.event.id = :eventId")
     Optional<SeatedTicket> findByRowAndSeatAndCategoryAndEvent(int row, int seat, long categoryId, long eventId);
+
+    @Query("SELECT st " +
+            "FROM SeatedTicket st " +
+            "WHERE st.categoryPrice.event.id = :eventId")
+    List<SeatedTicket> findSoldTicketsByEventId(long eventId);
 }

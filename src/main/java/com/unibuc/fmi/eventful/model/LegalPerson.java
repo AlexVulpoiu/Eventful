@@ -20,4 +20,9 @@ public class LegalPerson extends Organiser {
     private String name;
 
     private Long cui;
+
+    @Override
+    public String getOrganiserName() {
+        return name;
+    }
 }

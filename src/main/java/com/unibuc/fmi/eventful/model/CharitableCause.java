@@ -28,7 +28,7 @@ public class CharitableCause {
 
     private double collectedAmount;
 
-    private LocalDateTime endDate;
+    private LocalDateTime updatedAt;
 
     @ManyToOne
     private Organiser organiser;

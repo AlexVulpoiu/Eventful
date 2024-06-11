@@ -46,7 +46,7 @@
                 align-items: center;
                 height: 300px;
             }
-            .barcode, .qrcode, .logo {
+            .qrcode, .logo {
                 flex: 1;
                 text-align: center;
             }
@@ -95,17 +95,13 @@
             <div class="details">
                 <div>Event: <span th:text="${order.event.name}">Example event</span></div>
                 <div>Date & Time: <span th:text="${#temporals.format(order.event.startDate, 'dd-MM-yyyy HH:mm')}">2024-05-18 18:00</span></div>
-                <div>Price: <span th:text="${ticket.ticketPhase.price}">100.00</span> RON</div>
+                <div>Price: <span th:text="${ticket.standingCategory.price}">100.00</span> RON</div>
                 <div>Location: <span th:text="${order.event.location.name}">Example Arena</span></div>
-                <div>Category: <span th:text="${ticket.ticketPhase.standingCategory.id.name}">VIP</span></div>
+                <div>Category: <span th:text="${ticket.standingCategory.id.name}">VIP</span></div>
                 <div>Address: <span th:text="${order.event.location.getFullAddressDetails()}">Example Street 42, City, Country</span></div>
             </div>
 
             <div class="separator1"></div>
-
-            <div class="barcode">
-                <img th:src="@{${code128Barcode}}" alt="Barcode" width="650" height="150">
-            </div>
         </div>
     </body>
 </html>

@@ -5,21 +5,23 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SeatsCategoryDto {
-
-    private Long id;
+public class ProfileDto {
 
     private String name;
 
-    private int minRow;
+    private String email;
 
-    private int maxRow;
+    private String phone;
 
-    private int minSeat;
+    private int xp;
 
-    private int maxSeat;
+    private int availablePoints;
+
+    private List<OrderDetailsDto> orders;
 }

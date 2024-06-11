@@ -94,8 +94,8 @@ public class PaymentService {
         SessionCreateParams params =
                 SessionCreateParams.builder()
                         .setMode(SessionCreateParams.Mode.PAYMENT)
-                        .setSuccessUrl(successUrl + orderId)
-                        .setCancelUrl(cancelUrl + orderId)
+                        .setSuccessUrl(successUrl)
+                        .setCancelUrl(cancelUrl)
                         .addLineItem(lineItem)
                         .build();
 

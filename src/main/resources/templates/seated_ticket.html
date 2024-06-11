@@ -46,7 +46,7 @@
                 align-items: center;
                 height: 300px;
             }
-            .barcode, .qrcode, .logo {
+            .qrcode, .logo {
                 flex: 1;
                 text-align: center;
             }
@@ -104,10 +104,6 @@
             </div>
 
             <div class="separator1"></div>
-
-            <div class="barcode">
-                <img th:src="@{${code128Barcode}}" alt="Barcode" width="650" height="150">
-            </div>
         </div>
     </body>
 </html>

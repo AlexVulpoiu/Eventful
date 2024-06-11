@@ -1,5 +1,6 @@
 package com.unibuc.fmi.eventful.model;
 
+import com.unibuc.fmi.eventful.enums.PaymentIntentStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -52,10 +53,19 @@ public class Order {
     }
 
     public String getName() {
-        return "Eventful\nOrder #" + id + " from " + DateTimeFormatter.ofPattern("dd/MM/yyyy").format(orderDate) + " for " + event.getName();
+        return "Eventful Order #" + id + " from " + DateTimeFormatter.ofPattern("dd/MM/yyyy").format(orderDate) + " for " + event.getName();
     }
 
     public double getPaymentAmount() {
         return total - 1.0 * discountPoints / 10.0;
+    }
+
+    public String getStatus() {
+        return String.valueOf(PaymentIntentStatus.SUCCEEDED);
+//        if (paymentSession == null || paymentSession.getPaymentIntent() == null) {
+//            return String.valueOf(PaymentIntentStatus.PROCESSING);
+//        }
+//
+//        return String.valueOf(paymentSession.getPaymentIntent().getIntentStatus());
     }
 }

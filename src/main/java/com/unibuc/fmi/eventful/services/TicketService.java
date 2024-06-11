@@ -4,7 +4,6 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
-import com.google.zxing.oned.Code128Writer;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.itextpdf.html2pdf.ConverterProperties;
 import com.itextpdf.html2pdf.HtmlConverter;
@@ -13,8 +12,10 @@ import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.font.FontProvider;
+import com.unibuc.fmi.eventful.dto.TicketDto;
 import com.unibuc.fmi.eventful.dto.request.order.NewOrderDto;
 import com.unibuc.fmi.eventful.exceptions.BadRequestException;
+import com.unibuc.fmi.eventful.exceptions.ForbiddenException;
 import com.unibuc.fmi.eventful.exceptions.NotFoundException;
 import com.unibuc.fmi.eventful.model.AbstractTicket;
 import com.unibuc.fmi.eventful.model.Order;
@@ -22,10 +23,7 @@ import com.unibuc.fmi.eventful.model.SeatedTicket;
 import com.unibuc.fmi.eventful.model.StandingTicket;
 import com.unibuc.fmi.eventful.model.ids.CategoryPriceId;
 import com.unibuc.fmi.eventful.model.ids.StandingCategoryId;
-import com.unibuc.fmi.eventful.repository.CategoryPriceRepository;
-import com.unibuc.fmi.eventful.repository.SeatedTicketRepository;
-import com.unibuc.fmi.eventful.repository.SeatsCategoryRepository;
-import com.unibuc.fmi.eventful.repository.StandingCategoryRepository;
+import com.unibuc.fmi.eventful.repository.*;
 import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
 import jakarta.mail.util.ByteArrayDataSource;
@@ -45,10 +43,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -58,7 +53,10 @@ public class TicketService {
     @Value("${eventful.app.images.directory}")
     String imagesDirectory;
 
+    final AbstractTicketRepository abstractTicketRepository;
     final CategoryPriceRepository categoryPriceRepository;
+    final EventRepository eventRepository;
+    final OrganiserRepository organiserRepository;
     final SeatedTicketRepository seatedTicketRepository;
     final SeatsCategoryRepository seatsCategoryRepository;
     final StandingCategoryRepository standingCategoryRepository;
@@ -66,7 +64,6 @@ public class TicketService {
     final S3Service s3Service;
     final SendEmailService sendEmailService;
     final TemplateEngine templateEngine;
-    Code128Writer code128Writer;
     QRCodeWriter qrCodeWriter;
     ConverterProperties converterProperties;
 
@@ -77,7 +74,6 @@ public class TicketService {
         templateResolver.setTemplateMode(TemplateMode.HTML);
         templateEngine.setTemplateResolver(templateResolver);
 
-        code128Writer = new Code128Writer();
         qrCodeWriter = new QRCodeWriter();
 
         FontProvider fontProvider = new DefaultFontProvider();
@@ -99,10 +95,9 @@ public class TicketService {
             throw new BadRequestException("Only " + availableTickets + " tickets available for " + category + "category!");
         }
 
-        var currentTicketPhase = standingCategory.getCurrentTicketPhase();
         List<AbstractTicket> tickets = new ArrayList<>();
         for (int i = 0; i < numberOfTickets; i++) {
-            tickets.add(new StandingTicket(order, currentTicketPhase));
+            tickets.add(new StandingTicket(order, standingCategory));
         }
 
         return tickets;
@@ -160,16 +155,8 @@ public class TicketService {
         context.setVariable("ticket", seatedTicket != null ? seatedTicket : standingTicket);
         context.setVariable("order", order);
         context.setVariable("eventLogo", eventService.getEventLogoUrl(order.getEvent()));
-        context.setVariable("code128Barcode", generateCode128Barcode(ticket));
         context.setVariable("qrBarcode", generateQRBarcode(ticket));
         return templateEngine.process(ticket instanceof SeatedTicket ? "templates/seated_ticket" : "templates/standing_ticket", context);
-    }
-
-    private String generateCode128Barcode(AbstractTicket ticket) throws IOException {
-        BitMatrix bitMatrix = code128Writer.encode(ticket.getExternalId(), BarcodeFormat.CODE_128, 650, 150);
-        Path barcodeLocation = Paths.get(imagesDirectory, "code128_" + ticket.getExternalId() + ".png");
-        MatrixToImageWriter.writeToPath(bitMatrix, "PNG", barcodeLocation);
-        return String.valueOf(barcodeLocation);
     }
 
     private String generateQRBarcode(AbstractTicket ticket) throws WriterException, IOException {
@@ -177,5 +164,56 @@ public class TicketService {
         Path qrLocation = Paths.get(imagesDirectory, "qrcode_" + ticket.getExternalId() + ".png");
         MatrixToImageWriter.writeToPath(bitMatrix, "PNG", qrLocation);
         return String.valueOf(qrLocation);
+    }
+
+    public TicketDto getInfo(Long eventId, String ticketId, Long organiserId) {
+        organiserRepository.findById(organiserId)
+                .orElseThrow(() -> new ForbiddenException("You are not allowed to perform this operation!"));
+        var event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found!"));
+        if (!Objects.equals(event.getOrganiser().getId(), organiserId)) {
+            throw new ForbiddenException("You are not allowed to perform this operation!");
+        }
+
+        var ticket = abstractTicketRepository.findByExternalIdAndEventId(ticketId, eventId)
+                .orElseThrow(() -> new BadRequestException("There is no ticket with these details for the selected event!"));
+
+        var ticketDto = TicketDto.builder()
+                .externalId(ticket.getExternalId())
+                .eventId(eventId)
+                .eventName(event.getName())
+                .startDate(event.getStartDate())
+                .locationAddress(event.getLocation().getShortAddressWithName())
+                .validated(ticket.isValidated())
+                .build();
+
+        if (ticket instanceof StandingTicket standingTicket) {
+            ticketDto.setCategory(standingTicket.getStandingCategory().getId().getName());
+        } else if (ticket instanceof SeatedTicket seatedTicket) {
+            ticketDto.setCategory(seatedTicket.getCategoryPrice().getCategory().getName());
+            ticketDto.setRow(seatedTicket.getNumberOfRow());
+            ticketDto.setSeat(seatedTicket.getSeat());
+        }
+
+        return ticketDto;
+    }
+
+    public void validate(Long eventId, String ticketId, Long organiserId) {
+        organiserRepository.findById(organiserId)
+                .orElseThrow(() -> new ForbiddenException("You are not allowed to perform this operation!"));
+        var event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found!"));
+        if (!Objects.equals(event.getOrganiser().getId(), organiserId)) {
+            throw new ForbiddenException("You are not allowed to perform this operation!");
+        }
+
+        var ticket = abstractTicketRepository.findByExternalIdAndEventId(ticketId, eventId)
+                .orElseThrow(() -> new BadRequestException("There is no ticket with these details for the selected event!"));
+        if (ticket.isValidated()) {
+            throw new BadRequestException("The ticket was already validated!");
+        }
+
+        ticket.setValidated(true);
+        abstractTicketRepository.save(ticket);
     }
 }

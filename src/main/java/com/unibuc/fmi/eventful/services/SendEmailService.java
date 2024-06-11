@@ -141,7 +141,7 @@ public class SendEmailService {
         } else {
             Map<String, List<StandingTicket>> ticketsByCategory = new HashMap<>();
             for (var ticket : order.getTickets()) {
-                var categoryName = ((StandingTicket) ticket).getTicketPhase().getStandingCategory().getId().getName();
+                var categoryName = ((StandingTicket) ticket).getStandingCategory().getId().getName();
                 if (ticketsByCategory.containsKey(categoryName)) {
                     ticketsByCategory.get(categoryName).add((StandingTicket) ticket);
                 } else {
@@ -244,7 +244,7 @@ public class SendEmailService {
                     <td style="border:1px solid black; border-collapse:collapse;">[[TOTAL]]</td>
                 </tr>
                 """;
-        var price = ticketsList.get(0).getTicketPhase().getPrice();
+        var price = ticketsList.get(0).getStandingCategory().getPrice();
         tableRow = tableRow.replace("[[PRODUCT]]", ticketsList.get(0).getName());
         tableRow = tableRow.replace("[[QUANTITY]]", String.valueOf(ticketsList.size()));
         tableRow = tableRow.replace("[[PRICE]]", String.valueOf(price));

@@ -1,5 +1,8 @@
 package com.unibuc.fmi.eventful.services;
 
+import com.unibuc.fmi.eventful.dto.EventDto;
+import com.unibuc.fmi.eventful.dto.EventPreviewDto;
+import com.unibuc.fmi.eventful.dto.LocationDto;
 import com.unibuc.fmi.eventful.dto.request.event.AddEventDto;
 import com.unibuc.fmi.eventful.dto.request.event.ChangeEventStatusDto;
 import com.unibuc.fmi.eventful.enums.EventStatus;
@@ -38,9 +41,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.time.LocalDateTime;
-import java.util.Optional;
-import java.util.TimeZone;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -52,12 +53,12 @@ public class EventService {
 
     final AbstractLocationRepository abstractLocationRepository;
     final CategoryPriceRepository categoryPriceRepository;
-    final CharitableCauseRepository charitableCauseRepository;
     final EventRepository eventRepository;
     final OrganiserRepository organiserRepository;
+    final SeatedTicketRepository seatedTicketRepository;
     final SeatsCategoryRepository seatsCategoryRepository;
     final StandingCategoryRepository standingCategoryRepository;
-    final TicketPhaseRepository ticketPhaseRepository;
+    final CharitableCauseService charitableCauseService;
     final S3Service s3Service;
     final SendEmailService sendEmailService;
     final EventMapper eventMapper;
@@ -84,11 +85,11 @@ public class EventService {
         event.setOrganiser(organiser);
 
         if (addEventDto.getCharityPercentage() > 0) {
-            if (addEventDto.getCharitableCauseId() == null) {
+            if (addEventDto.getAddCharitableCause() == null) {
                 throw new BadRequestException("A charitable cause must be provided for this event!");
             }
-            CharitableCause charitableCause = charitableCauseRepository.findById(addEventDto.getCharitableCauseId())
-                    .orElseThrow(() -> new NotFoundException("Charitable cause with id " + addEventDto.getCharitableCauseId() + " not found!"));
+
+            var charitableCause = charitableCauseService.addCharitableCause(addEventDto.getAddCharitableCause(), organiserId);
             event.setCharitableCause(charitableCause);
         }
         event = eventRepository.save(event);
@@ -103,15 +104,9 @@ public class EventService {
                 var standingCategoryId = new StandingCategoryId(addEventDto.getLocationId(), event.getId(),
                         standingCategoryDto.getName());
                 var standingCategory = new StandingCategory(standingCategoryId, standingCategoryDto.getCapacity(),
+                        computePrice(standingCategoryDto.getPrice(), addEventDto.getFeeSupporter()),
                         (StandingLocation) location, event);
-                standingCategory = standingCategoryRepository.save(standingCategory);
-
-                for (var ticketPhaseDto : standingCategoryDto.getTicketPhases()) {
-                    var ticketPhase = new TicketPhase(ticketPhaseDto.getName(),
-                            computePrice(ticketPhaseDto.getPrice(), addEventDto.getFeeSupporter()),
-                            ticketPhaseDto.getDateLimit(), standingCategory);
-                    ticketPhaseRepository.save(ticketPhase);
-                }
+                standingCategoryRepository.save(standingCategory);
             }
         } else if (location instanceof SeatedLocation) {
             var categoriesPrices = addEventDto.getCategoriesPrices();
@@ -211,5 +206,60 @@ public class EventService {
         calendarOutputter.output(calendar, baos);
 
         return new ByteArrayDataSource(baos.toByteArray(), "text/calendar");
+    }
+
+    // TODO: pagination, check by user...
+    public List<EventPreviewDto> getEvents(Integer pageNumber, Integer pageSize, String search, Long userId) {
+        var events = eventRepository.searchEventsByNameInChronologicalOrderEndingAfter(
+                search == null ? "" : search.toLowerCase(), LocalDateTime.now());
+        var eventPreviews = events.stream().map(eventMapper::eventToEventPreviewDto).toList();
+        eventPreviews.forEach(e -> e.setLogo(s3Service.getObjectUrl(S3Service.EVENTS_FOLDER, e.getLogo()).toString()));
+
+        return eventPreviews;
+    }
+
+    public EventDto getEventDetails(Long eventId) {
+        var event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found!"));
+        var eventDto = eventMapper.eventToEventDto(event);
+
+        eventDto.setLogo(s3Service.getObjectUrl(S3Service.EVENTS_FOLDER, event.getLogo()).toString());
+        eventDto.setLocation(LocationDto.from(event.getLocation()));
+        eventDto.setUnavailableSeats(new ArrayList<>());
+
+        eventDto.setStandingCategories(new ArrayList<>());
+        if (event.getStandingCategories() != null) {
+            for (var standingCategory : event.getStandingCategories()) {
+                eventDto.getStandingCategories().add(
+                        EventDto.StandingCategoryDto.builder()
+                                .name(standingCategory.getId().getName())
+                                .price(standingCategory.getPrice())
+                                .ticketsRemaining(standingCategory.getCapacity() - standingCategory.getSoldTickets())
+                                .build()
+                );
+            }
+        }
+
+        eventDto.setSeatsCategories(new ArrayList<>());
+        if (event.getCategoryPrices() != null) {
+            for (var categoryPrice: event.getCategoryPrices()) {
+                eventDto.getSeatsCategories().add(
+                        EventDto.SeatsCategoryDetails.builder()
+                                .id(categoryPrice.getCategory().getId())
+                                .name(categoryPrice.getCategory().getName())
+                                .price(categoryPrice.getPrice())
+                                .minRow(categoryPrice.getCategory().getMinRow())
+                                .maxRow(categoryPrice.getCategory().getMaxRow())
+                                .minSeat(categoryPrice.getCategory().getMinSeat())
+                                .maxSeat(categoryPrice.getCategory().getMaxSeat())
+                                .build()
+                );
+            }
+
+            var soldTickets = seatedTicketRepository.findSoldTicketsByEventId(eventId);
+            soldTickets.forEach(t -> eventDto.getUnavailableSeats().add(new EventDto.Seat(t.getNumberOfRow(), t.getSeat())));
+        }
+
+        return eventDto;
     }
 }

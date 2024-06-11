@@ -5,21 +5,23 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SeatsCategoryDto {
+public class EventPreviewDto {
 
     private Long id;
 
     private String name;
 
-    private int minRow;
+    private LocalDateTime startDate;
 
-    private int maxRow;
+    private LocalDateTime endDate;
 
-    private int minSeat;
+    private String location;
 
-    private int maxSeat;
+    private String logo;
 }

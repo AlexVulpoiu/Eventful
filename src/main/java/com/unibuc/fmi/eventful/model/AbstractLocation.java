@@ -39,4 +39,8 @@ public abstract class AbstractLocation {
     public String getFullAddressWithName() {
         return String.join(", ", name, getFullAddressDetails());
     }
+
+    public String getShortAddressWithName() {
+        return String.join(", ", name, city, country);
+    }
 }

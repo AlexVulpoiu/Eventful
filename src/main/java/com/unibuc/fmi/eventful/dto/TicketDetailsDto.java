@@ -5,21 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.net.URL;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SeatsCategoryDto {
-
-    private Long id;
+public class TicketDetailsDto {
 
     private String name;
 
-    private int minRow;
-
-    private int maxRow;
-
-    private int minSeat;
-
-    private int maxSeat;
+    private URL url;
 }

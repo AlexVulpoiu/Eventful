@@ -28,8 +28,6 @@ public class SeatsCategory {
 
     private int maxSeat;
 
-    private String color;
-
     @ManyToOne
     private SeatedLocation seatedLocation;
 }

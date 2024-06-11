@@ -27,7 +27,4 @@ public class AddSeatsCategoryDto {
 
     @Min(value = 1)
     private int maxSeat;
-
-    @NotBlank
-    private String color;
 }

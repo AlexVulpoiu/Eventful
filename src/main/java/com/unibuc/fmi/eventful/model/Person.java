@@ -18,4 +18,9 @@ import lombok.experimental.SuperBuilder;
 public class Person extends Organiser {
 
     private Long cnp;
+
+    @Override
+    public String getOrganiserName() {
+        return getFullName();
+    }
 }

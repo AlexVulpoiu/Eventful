@@ -1,5 +1,6 @@
 package com.unibuc.fmi.eventful.dto.request.event;
 
+import com.unibuc.fmi.eventful.dto.request.charitablecause.AddCharitableCauseDto;
 import com.unibuc.fmi.eventful.enums.FeeSupporter;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Future;
@@ -38,22 +39,23 @@ public class AddEventDto {
     @NotNull
     private FeeSupporter feeSupporter;
 
+    private long locationId;
+
+    // TODO: tombole si promotii
     @Min(0)
     private int charityPercentage;
 
-    private long locationId;
-
-    private Long charitableCauseId;
+    private AddCharitableCauseDto addCharitableCause;
 
     private List<AddCategoryPriceDto> categoriesPrices;
 
     private List<@Valid AddStandingCategoryDto> standingCategories;
 
     public LocalDateTime getStartDateWithPreparationTime() {
-        return startDate.minusMinutes(preparationTime);
+        return startDate.minusHours(preparationTime);
     }
 
     public LocalDateTime getEndDateWithPreparationTime() {
-        return endDate.plusMinutes(preparationTime);
+        return endDate.plusHours(preparationTime);
     }
 }

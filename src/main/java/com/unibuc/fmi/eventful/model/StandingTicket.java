@@ -15,19 +15,19 @@ import lombok.experimental.SuperBuilder;
 public class StandingTicket extends AbstractTicket {
 
     @ManyToOne
-    private TicketPhase ticketPhase;
+    private StandingCategory standingCategory;
 
     protected StandingTicket() {
 
     }
 
-    public StandingTicket(Order order, TicketPhase ticketPhase) {
+    public StandingTicket(Order order, StandingCategory standingCategory) {
         super(order);
-        this.ticketPhase = ticketPhase;
+        this.standingCategory = standingCategory;
     }
 
     @Override
     public String getName() {
-        return String.format("Category %s, %s selling phase", ticketPhase.getStandingCategory().getId().getName(), ticketPhase.getName());
+        return String.format("Category %s", standingCategory.getId().getName());
     }
 }
