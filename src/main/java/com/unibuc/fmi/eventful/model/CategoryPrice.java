@@ -27,4 +27,13 @@ public class CategoryPrice {
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("eventId")
     private Event event;
+
+    public double getPrice() {
+        var discount = 0;
+        if (event.getActivePromotion().isPresent()) {
+            discount = event.getActivePromotion().get().getValue();
+        }
+
+        return (100 - discount) * price / 100;
+    }
 }

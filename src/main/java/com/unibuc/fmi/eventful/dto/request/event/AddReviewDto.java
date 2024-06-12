@@ -1,7 +1,5 @@
 package com.unibuc.fmi.eventful.dto.request.event;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,8 +16,4 @@ public class AddReviewDto {
 
     @NotBlank
     private String text;
-
-    @Min(1)
-    @Max(5)
-    private int rating;
 }

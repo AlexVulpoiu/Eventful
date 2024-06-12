@@ -33,6 +33,11 @@ public class S3Service {
         s3.putObject(putObjectRequest);
     }
 
+    public void deleteFile(String folder, String name) {
+        String key = String.join("/", folder, name);
+        s3.deleteObject(bucketName, key);
+    }
+
     public URL getObjectUrl(String folder, String name) {
         String key = String.join("/", folder, name);
         return s3.generatePresignedUrl(bucketName, key, Date.from(Instant.now().plus(1, ChronoUnit.HOURS)));

@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,11 +34,13 @@ public class EventDto {
 
     private LocationDto location;
 
-    // TODO: add charitable cause
-
     private String organiserName;
 
-    private double organiserRating;
+    private int discount;
+
+    private LocalDate discountEndDate;
+
+    private RaffleDto raffle;
 
     private List<SeatsCategoryDetails> seatsCategories = new ArrayList<>();
 

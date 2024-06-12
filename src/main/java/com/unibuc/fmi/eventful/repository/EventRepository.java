@@ -16,4 +16,9 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             "WHERE lower(e.name) LIKE %:search% AND e.endDate >= :dateTime " +
             "ORDER BY e.startDate ASC")
     List<Event> searchEventsByNameInChronologicalOrderEndingAfter(String search, LocalDateTime dateTime);
+
+    @Query("SELECT e " +
+            "FROM Event e " +
+            "WHERE e.status = 'REJECTED' AND e.updatedAt < :dateTime")
+    List<Event> getRejectedEventsNotUpdatedSince(LocalDateTime dateTime);
 }

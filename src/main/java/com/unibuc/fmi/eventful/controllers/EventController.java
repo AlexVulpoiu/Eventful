@@ -2,8 +2,10 @@ package com.unibuc.fmi.eventful.controllers;
 
 import com.unibuc.fmi.eventful.dto.EventDto;
 import com.unibuc.fmi.eventful.dto.EventPreviewDto;
+import com.unibuc.fmi.eventful.dto.RaffleDto;
 import com.unibuc.fmi.eventful.dto.TicketDto;
 import com.unibuc.fmi.eventful.dto.request.event.AddEventDto;
+import com.unibuc.fmi.eventful.dto.request.event.AddPromotionDto;
 import com.unibuc.fmi.eventful.dto.request.event.ChangeEventStatusDto;
 import com.unibuc.fmi.eventful.enums.EventStatus;
 import com.unibuc.fmi.eventful.security.services.UserDetailsImpl;
@@ -57,7 +59,6 @@ public class EventController {
     }
 
     @GetMapping
-//    @PreAuthorize("isAuthenticated()")
     public List<EventPreviewDto> getEvents(@RequestParam(required = false) Integer pageNumber,
                                            @RequestParam(required = false) Integer pageSize,
                                            @RequestParam(required = false) String search,
@@ -66,8 +67,7 @@ public class EventController {
     }
 
     @GetMapping("/{eventId}")
-    @PreAuthorize("isAuthenticated()")
-    public EventDto getEventDetails(@PathVariable Long eventId, @AuthenticationPrincipal UserDetailsImpl principal) {
+    public EventDto getEventDetails(@PathVariable Long eventId) {
         return eventService.getEventDetails(eventId);
     }
 
@@ -83,5 +83,19 @@ public class EventController {
     public void validateTicket(@PathVariable Long eventId, @RequestParam String ticketId,
                                @AuthenticationPrincipal UserDetailsImpl principal) {
         ticketService.validate(eventId, ticketId, principal.getId());
+    }
+
+    @PostMapping("/{eventId}/promotion")
+    @PreAuthorize("hasAuthority('ORGANISER')")
+    public EventDto addPromotionForEvent(@PathVariable Long eventId, @Valid @RequestBody AddPromotionDto promotionDto,
+                                         @AuthenticationPrincipal UserDetailsImpl principal) {
+        return eventService.addPromotion(eventId, promotionDto, principal.getId());
+    }
+
+    @PostMapping("/{eventId}/raffle")
+    @PreAuthorize("hasAuthority('ORGANISER')")
+    public EventDto addRaffleForEvent(@PathVariable Long eventId, @Valid @RequestBody RaffleDto raffleDto,
+                                      @AuthenticationPrincipal UserDetailsImpl principal) {
+        return eventService.addRaffle(eventId, raffleDto, principal.getId());
     }
 }

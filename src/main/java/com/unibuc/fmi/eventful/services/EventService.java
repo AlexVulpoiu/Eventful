@@ -3,7 +3,9 @@ package com.unibuc.fmi.eventful.services;
 import com.unibuc.fmi.eventful.dto.EventDto;
 import com.unibuc.fmi.eventful.dto.EventPreviewDto;
 import com.unibuc.fmi.eventful.dto.LocationDto;
+import com.unibuc.fmi.eventful.dto.RaffleDto;
 import com.unibuc.fmi.eventful.dto.request.event.AddEventDto;
+import com.unibuc.fmi.eventful.dto.request.event.AddPromotionDto;
 import com.unibuc.fmi.eventful.dto.request.event.ChangeEventStatusDto;
 import com.unibuc.fmi.eventful.enums.EventStatus;
 import com.unibuc.fmi.eventful.enums.FeeSupporter;
@@ -20,6 +22,7 @@ import jakarta.mail.util.ByteArrayDataSource;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import net.fortuna.ical4j.data.CalendarOutputter;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.TimeZoneRegistry;
@@ -32,6 +35,7 @@ import net.fortuna.ical4j.model.property.Uid;
 import net.fortuna.ical4j.model.property.immutable.ImmutableCalScale;
 import net.fortuna.ical4j.model.property.immutable.ImmutableVersion;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,6 +47,7 @@ import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -55,6 +60,7 @@ public class EventService {
     final CategoryPriceRepository categoryPriceRepository;
     final EventRepository eventRepository;
     final OrganiserRepository organiserRepository;
+    final RaffleRepository raffleRepository;
     final SeatedTicketRepository seatedTicketRepository;
     final SeatsCategoryRepository seatsCategoryRepository;
     final StandingCategoryRepository standingCategoryRepository;
@@ -223,6 +229,18 @@ public class EventService {
                 .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found!"));
         var eventDto = eventMapper.eventToEventDto(event);
 
+        event.getActivePromotion().ifPresent(p -> {
+            eventDto.setDiscount(p.getValue());
+            eventDto.setDiscountEndDate(p.getEndDate());
+        });
+        if (event.getRaffle() != null) {
+            eventDto.setRaffle(RaffleDto.builder()
+                    .participantsLimit(event.getRaffle().getParticipantsLimit())
+                    .endDate(event.getRaffle().getEndDate())
+                    .prize(event.getRaffle().getPrize())
+                    .partnerName(event.getRaffle().getPartnerName())
+                    .build());
+        }
         eventDto.setLogo(s3Service.getObjectUrl(S3Service.EVENTS_FOLDER, event.getLogo()).toString());
         eventDto.setLocation(LocationDto.from(event.getLocation()));
         eventDto.setUnavailableSeats(new ArrayList<>());
@@ -242,7 +260,7 @@ public class EventService {
 
         eventDto.setSeatsCategories(new ArrayList<>());
         if (event.getCategoryPrices() != null) {
-            for (var categoryPrice: event.getCategoryPrices()) {
+            for (var categoryPrice : event.getCategoryPrices()) {
                 eventDto.getSeatsCategories().add(
                         EventDto.SeatsCategoryDetails.builder()
                                 .id(categoryPrice.getCategory().getId())
@@ -261,5 +279,78 @@ public class EventService {
         }
 
         return eventDto;
+    }
+
+    public EventDto addPromotion(Long eventId, AddPromotionDto promotionDto, Long organiserId) {
+        var event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found!"));
+        if (!event.getOrganiser().getId().equals(organiserId)) {
+            throw new ForbiddenException("You are not allowed to perform this operation!");
+        }
+
+        if (event.getActivePromotion().isPresent()) {
+            throw new BadRequestException("The current event has an active promotion!");
+        }
+
+        if (event.getEndDate().toLocalDate().isBefore(promotionDto.getEndDate())) {
+            throw new BadRequestException("Promotion end date can't be after event end date!");
+        }
+
+        Promotion promotion = Promotion.builder()
+                .value(promotionDto.getValue())
+                .endDate(promotionDto.getEndDate())
+                .event(event)
+                .build();
+        event.getPromotions().add(promotion);
+        eventRepository.save(event);
+
+        return getEventDetails(eventId);
+    }
+
+    public EventDto addRaffle(Long eventId, RaffleDto raffleDto, Long organiserId) {
+        var event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found!"));
+        if (!event.getOrganiser().getId().equals(organiserId)) {
+            throw new ForbiddenException("You are not allowed to perform this operation!");
+        }
+
+        if (event.getRaffle() != null) {
+            throw new BadRequestException("You can't add more than one raffle per event!");
+        }
+
+        if ((raffleDto.getParticipantsLimit() == 0 && raffleDto.getEndDate() == null)
+                || (raffleDto.getParticipantsLimit() > 0 && raffleDto.getEndDate() != null)) {
+            throw new BadRequestException("A raffle should have either a limit for participants or a limit date!");
+        }
+
+        Raffle raffle = Raffle.builder()
+                .participantsLimit(raffleDto.getParticipantsLimit())
+                .endDate(raffleDto.getEndDate())
+                .prize(raffleDto.getPrize())
+                .partnerName(raffleDto.getPartnerName())
+                .event(event)
+                .build();
+        raffle = raffleRepository.save(raffle);
+
+        event.setRaffle(raffle);
+        eventRepository.save(event);
+
+        return getEventDetails(eventId);
+    }
+
+    @Scheduled(cron = "0 0 6 ? * *")
+    public void deleteRejectedEvents() {
+        log.info("Starting job for rejected events deletion");
+        var events = eventRepository.getRejectedEventsNotUpdatedSince(LocalDateTime.now().minusDays(7));
+        log.info(events.size() + " events to delete");
+
+        for (var e : events) {
+            log.info("Deleting event with id " + e.getId());
+            if (e.getLogo() != null) {
+                s3Service.deleteFile(S3Service.EVENTS_FOLDER, e.getLogo());
+            }
+            eventRepository.delete(e);
+        }
+        log.info("Ending job for rejected events deletion");
     }
 }

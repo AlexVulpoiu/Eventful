@@ -51,8 +51,6 @@ public class ReviewService {
         var isParticipant = abstractTicketRepository.findValidatedByUserIdAndEventId(userId, eventId).isPresent();
         var review = Review.builder()
                 .text(addReviewDto.getText())
-                .rating(addReviewDto.getRating())
-                .participant(isParticipant)
                 .dateTime(LocalDateTime.now())
                 .event(event)
                 .user(user)
@@ -67,7 +65,6 @@ public class ReviewService {
         eventRepository.save(event);
 
         var organiser = event.getOrganiser();
-        organiser.updateRating();
         organiserRepository.save(organiser);
 
         return reviewMapper.reviewToReviewDto(review);

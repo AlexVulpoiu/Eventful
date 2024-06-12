@@ -48,4 +48,13 @@ public class StandingCategory {
     public int getSoldTickets() {
         return standingTickets.size();
     }
+
+    public double getPrice() {
+        var discount = 0;
+        if (event.getActivePromotion().isPresent()) {
+            discount = event.getActivePromotion().get().getValue();
+        }
+
+        return (100 - discount) * price / 100;
+    }
 }

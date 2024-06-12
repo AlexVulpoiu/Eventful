@@ -6,27 +6,34 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 @Entity
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "reviews")
-public class Review {
+@Table(name = "raffles")
+public class Raffle {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String text;
+    private int participantsLimit;
 
-    private LocalDateTime dateTime;
+    private LocalDate endDate;
 
-    @ManyToOne
-    private Event event;
+    private int prize;
+
+    private String partnerName;
 
     @ManyToOne
     private User user;
+
+    @OneToOne
+    private Event event;
+
+    @OneToOne
+    private Voucher voucher;
 }

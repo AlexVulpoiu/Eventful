@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -23,7 +24,10 @@ public class User extends AbstractUser {
     private int availablePoints = 0;
 
     @OneToMany(mappedBy = "user")
-    private List<Order> orders;
+    private List<Order> orders = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user")
+    private List<Raffle> raffles = new ArrayList<>();
 
     public User(String firstName, String lastName, String email, String password) {
         super(firstName, lastName, email, password);

@@ -44,6 +44,9 @@ public class Order {
     @OneToOne
     private PaymentSession paymentSession;
 
+    @OneToOne
+    private Voucher voucher;
+
     public Order(User user, Event event) {
         this.user = user;
         this.event = event;

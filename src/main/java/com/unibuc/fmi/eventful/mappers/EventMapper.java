@@ -25,7 +25,6 @@ public interface EventMapper {
     @Mapping(target = "seatsCategories", ignore = true)
     @Mapping(target = "unavailableSeats", ignore = true)
     @Mapping(target = "organiserName", source = "organiser", qualifiedByName = "getOrganiserName")
-    @Mapping(target = "organiserRating", source = "organiser", qualifiedByName = "getOrganiserRating")
     EventDto eventToEventDto(Event event);
 
     @Named("getShortAddressWithName")
@@ -36,10 +35,5 @@ public interface EventMapper {
     @Named("getOrganiserName")
     static String getOrganiserName(Organiser organiser) {
         return organiser.getOrganiserName();
-    }
-
-    @Named("getOrganiserRating")
-    static double getOrganiserRating(Organiser organiser) {
-        return organiser.getRating();
     }
 }

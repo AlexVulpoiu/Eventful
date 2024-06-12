@@ -17,10 +17,6 @@ public class ReviewDto {
 
     private String text;
 
-    private int rating;
-
-    private boolean participant;
-
     private LocalDateTime dateTime;
 
     private long userId;
