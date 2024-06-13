@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -40,6 +42,9 @@ public abstract class AbstractUser {
     @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     protected Set<Role> roles;
+
+    @OneToMany(mappedBy = "abstractUser", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    protected List<Feedback> feedbackList = new ArrayList<>();
 
     public String getFullName() {
         return String.join(" ", firstName, lastName);

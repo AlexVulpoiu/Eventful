@@ -64,11 +64,10 @@ public class Order {
     }
 
     public String getStatus() {
-        return String.valueOf(PaymentIntentStatus.SUCCEEDED);
-//        if (paymentSession == null || paymentSession.getPaymentIntent() == null) {
-//            return String.valueOf(PaymentIntentStatus.PROCESSING);
-//        }
-//
-//        return String.valueOf(paymentSession.getPaymentIntent().getIntentStatus());
+        if (paymentSession == null || paymentSession.getPaymentIntent() == null) {
+            return String.valueOf(PaymentIntentStatus.PROCESSING);
+        }
+
+        return String.valueOf(paymentSession.getPaymentIntent().getIntentStatus());
     }
 }

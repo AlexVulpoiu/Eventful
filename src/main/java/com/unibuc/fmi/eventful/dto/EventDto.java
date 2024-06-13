@@ -58,6 +58,8 @@ public class EventDto {
 
         private double price;
 
+        private double initialPrice;
+
         private int ticketsRemaining;
     }
 
@@ -72,6 +74,8 @@ public class EventDto {
         private String name;
 
         private double price;
+
+        private double initialPrice;
 
         private int minRow;
 

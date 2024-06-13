@@ -3,6 +3,7 @@ package com.unibuc.fmi.eventful.services;
 import com.unibuc.fmi.eventful.dto.OrderDetailsDto;
 import com.unibuc.fmi.eventful.dto.ProfileDto;
 import com.unibuc.fmi.eventful.dto.TicketDetailsDto;
+import com.unibuc.fmi.eventful.enums.PaymentIntentStatus;
 import com.unibuc.fmi.eventful.exceptions.NotFoundException;
 import com.unibuc.fmi.eventful.repository.UserRepository;
 import lombok.AccessLevel;
@@ -37,11 +38,13 @@ public class ProfileService {
         List<OrderDetailsDto> orders = new ArrayList<>();
         for (var order: userOrders) {
             List<TicketDetailsDto> tickets = new ArrayList<>();
-            for (var ticket: order.getTickets()) {
-                tickets.add(TicketDetailsDto.builder()
-                        .name(ticket.getExternalId())
-                        .url(s3Service.getObjectUrl(S3Service.TICKETS_FOLDER, ticket.getExternalId() + ".pdf"))
-                        .build());
+            if (String.valueOf(PaymentIntentStatus.SUCCEEDED).equals(order.getStatus())) {
+                for (var ticket : order.getTickets()) {
+                    tickets.add(TicketDetailsDto.builder()
+                            .name(ticket.getExternalId())
+                            .url(s3Service.getObjectUrl(S3Service.TICKETS_FOLDER, ticket.getExternalId() + ".pdf"))
+                            .build());
+                }
             }
             orders.add(OrderDetailsDto.builder()
                     .id(order.getId())
@@ -56,5 +59,11 @@ public class ProfileService {
         profileDto.setOrders(orders);
 
         return profileDto;
+    }
+
+    public int getAvailablePoints(Long userId) {
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User with id " + userId + " not found!"));
+        return user.getAvailablePoints();
     }
 }

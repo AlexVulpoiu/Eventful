@@ -1,6 +1,8 @@
 package com.unibuc.fmi.eventful.repository;
 
 import com.unibuc.fmi.eventful.model.Event;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -13,9 +15,9 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     @Query("SELECT e " +
             "FROM Event e " +
-            "WHERE lower(e.name) LIKE %:search% AND e.endDate >= :dateTime " +
+            "WHERE e.status = 'ACCEPTED' AND lower(e.name) LIKE %:search% AND e.endDate >= :dateTime " +
             "ORDER BY e.startDate ASC")
-    List<Event> searchEventsByNameInChronologicalOrderEndingAfter(String search, LocalDateTime dateTime);
+    Page<Event> searchEventsByNameInChronologicalOrderEndingAfter(String search, LocalDateTime dateTime, Pageable pageable);
 
     @Query("SELECT e " +
             "FROM Event e " +

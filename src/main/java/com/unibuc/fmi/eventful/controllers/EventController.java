@@ -16,6 +16,7 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +24,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -59,11 +59,10 @@ public class EventController {
     }
 
     @GetMapping
-    public List<EventPreviewDto> getEvents(@RequestParam(required = false) Integer pageNumber,
-                                           @RequestParam(required = false) Integer pageSize,
-                                           @RequestParam(required = false) String search,
-                                           @AuthenticationPrincipal UserDetailsImpl principal) {
-        return eventService.getEvents(pageNumber, pageSize, search, principal.getId());
+    @PreAuthorize("isAnonymous() || hasAuthority('USER')")
+    public Page<EventPreviewDto> getEvents(@RequestParam(required = false) Integer pageNumber,
+                                           @RequestParam(required = false) String search) {
+        return eventService.getEvents(pageNumber, search);
     }
 
     @GetMapping("/{eventId}")

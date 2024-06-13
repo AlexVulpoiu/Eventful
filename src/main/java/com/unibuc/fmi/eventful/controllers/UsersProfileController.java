@@ -25,4 +25,10 @@ public class UsersProfileController {
     public ProfileDto getProfileDetails(@AuthenticationPrincipal UserDetailsImpl principal) {
         return profileService.getProfileDetails(principal.getId());
     }
+
+    @GetMapping("/points")
+    @PreAuthorize("hasAuthority('USER')")
+    public int getAvailablePoints(@AuthenticationPrincipal UserDetailsImpl principal) {
+        return profileService.getAvailablePoints(principal.getId());
+    }
 }

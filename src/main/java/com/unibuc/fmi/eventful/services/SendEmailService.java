@@ -222,7 +222,7 @@ public class SendEmailService {
                     <td style="border:1px solid black; border-collapse:collapse;">[[TOTAL]]</td>
                 </tr>
                 """;
-        var price = ticketsList.get(0).getCategoryPrice().getPrice();
+        var price = ticketsList.get(0).getCategoryPrice().getCurrentPrice();
         StringBuilder productName = new StringBuilder("Individual tickets for category " + entry.getKey());
         for (var ticket : ticketsList) {
             productName.append("<br>").append(ticket.getName());
@@ -244,7 +244,7 @@ public class SendEmailService {
                     <td style="border:1px solid black; border-collapse:collapse;">[[TOTAL]]</td>
                 </tr>
                 """;
-        var price = ticketsList.get(0).getStandingCategory().getPrice();
+        var price = ticketsList.get(0).getStandingCategory().getCurrentPrice();
         tableRow = tableRow.replace("[[PRODUCT]]", ticketsList.get(0).getName());
         tableRow = tableRow.replace("[[QUANTITY]]", String.valueOf(ticketsList.size()));
         tableRow = tableRow.replace("[[PRICE]]", String.valueOf(price));

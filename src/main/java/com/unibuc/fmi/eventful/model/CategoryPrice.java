@@ -28,7 +28,7 @@ public class CategoryPrice {
     @MapsId("eventId")
     private Event event;
 
-    public double getPrice() {
+    public double getCurrentPrice() {
         var discount = 0;
         if (event.getActivePromotion().isPresent()) {
             discount = event.getActivePromotion().get().getValue();

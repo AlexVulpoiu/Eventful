@@ -6,6 +6,7 @@ import com.unibuc.fmi.eventful.dto.request.signup.PersonSignupRequest;
 import com.unibuc.fmi.eventful.dto.request.signup.UserSignupRequest;
 import com.unibuc.fmi.eventful.dto.response.JwtResponse;
 import com.unibuc.fmi.eventful.dto.response.MessageResponse;
+import com.unibuc.fmi.eventful.exceptions.BadRequestException;
 import com.unibuc.fmi.eventful.mappers.OrganiserMapper;
 import com.unibuc.fmi.eventful.model.AbstractUser;
 import com.unibuc.fmi.eventful.model.Role;
@@ -50,14 +51,14 @@ public class AuthController {
     LegalPersonRepository legalPersonRepository;
 
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public JwtResponse authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         Optional<AbstractUser> optionalUser = abstractUserRepository.findByEmail(loginRequest.getEmail());
 
         if (optionalUser.isEmpty()) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Invalid credentials"));
+            throw new BadRequestException("Invalid credentials");
         }
         if (!optionalUser.get().isEnabled()) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Please activate your account before using the app."));
+            throw new BadRequestException("Please activate your account before using the app!");
         }
 
         Authentication authentication = authenticationManager.authenticate(
@@ -71,11 +72,8 @@ public class AuthController {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
 
-        return ResponseEntity.ok(new JwtResponse(jwt,
-                userDetails.getId(),
-                userDetails.getUsername(),
-                userDetails.getEmail(),
-                roles));
+        return new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername(), userDetails.getEmail(),
+                optionalUser.get().getFullName(), roles);
     }
 
     @PostMapping("/users/signup")

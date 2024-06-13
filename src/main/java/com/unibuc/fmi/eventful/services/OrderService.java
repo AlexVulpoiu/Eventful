@@ -43,6 +43,14 @@ public class OrderService {
         if (!EventStatus.ACCEPTED.equals(event.getStatus())) {
             throw new BadRequestException("You can't place orders for this event yet!");
         }
+
+        if ((newOrderDto.getSeatedTicketsDetails() != null && newOrderDto.getSeatedTicketsDetails().size() > 10)
+                || (newOrderDto.getStandingTickets() != null
+                        && newOrderDto.getStandingTickets().values().stream().reduce(Integer::sum).isPresent()
+                        && newOrderDto.getStandingTickets().values().stream().reduce(Integer::sum).get() > 10)) {
+            throw new BadRequestException("You can't have more than 10 tickets per order!");
+        }
+
         var location = event.getLocation();
 
         var order = orderRepository.save(new Order(user, event));
@@ -60,7 +68,7 @@ public class OrderService {
                         location.getId(), event.getId(), entry.getKey(), order));
             }
             total = tickets.stream()
-                    .map(ticket -> ((StandingTicket) ticket).getStandingCategory().getPrice())
+                    .map(ticket -> ((StandingTicket) ticket).getStandingCategory().getCurrentPrice())
                     .reduce(0.0, Double::sum);
         } else {
             var seatedTicketsDetails = newOrderDto.getSeatedTicketsDetails();
@@ -70,7 +78,7 @@ public class OrderService {
 
             tickets = ticketService.generateSeatedTicketsByEvent(seatedTicketsDetails, event.getId(), order);
             total = tickets.stream()
-                    .map(ticket -> ((SeatedTicket) ticket).getCategoryPrice().getPrice())
+                    .map(ticket -> ((SeatedTicket) ticket).getCategoryPrice().getCurrentPrice())
                     .reduce(0.0, Double::sum);
         }
 

@@ -35,6 +35,10 @@ import net.fortuna.ical4j.model.property.Uid;
 import net.fortuna.ical4j.model.property.immutable.ImmutableCalScale;
 import net.fortuna.ical4j.model.property.immutable.ImmutableVersion;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,7 +49,10 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Optional;
+import java.util.TimeZone;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -214,14 +221,18 @@ public class EventService {
         return new ByteArrayDataSource(baos.toByteArray(), "text/calendar");
     }
 
-    // TODO: pagination, check by user...
-    public List<EventPreviewDto> getEvents(Integer pageNumber, Integer pageSize, String search, Long userId) {
+    public Page<EventPreviewDto> getEvents(Integer pageNumber, String search) {
+        if (pageNumber == null || pageNumber < 0) {
+            pageNumber = 0;
+        }
+        Pageable pageable = PageRequest.of(pageNumber, 9);
         var events = eventRepository.searchEventsByNameInChronologicalOrderEndingAfter(
-                search == null ? "" : search.toLowerCase(), LocalDateTime.now());
-        var eventPreviews = events.stream().map(eventMapper::eventToEventPreviewDto).toList();
+                search == null ? "" : search.toLowerCase(), LocalDateTime.now(), pageable);
+
+        var eventPreviews = events.getContent().stream().map(eventMapper::eventToEventPreviewDto).toList();
         eventPreviews.forEach(e -> e.setLogo(s3Service.getObjectUrl(S3Service.EVENTS_FOLDER, e.getLogo()).toString()));
 
-        return eventPreviews;
+        return new PageImpl<>(eventPreviews, pageable, events.getTotalElements());
     }
 
     public EventDto getEventDetails(Long eventId) {
@@ -251,7 +262,8 @@ public class EventService {
                 eventDto.getStandingCategories().add(
                         EventDto.StandingCategoryDto.builder()
                                 .name(standingCategory.getId().getName())
-                                .price(standingCategory.getPrice())
+                                .price(standingCategory.getCurrentPrice())
+                                .initialPrice(standingCategory.getPrice())
                                 .ticketsRemaining(standingCategory.getCapacity() - standingCategory.getSoldTickets())
                                 .build()
                 );
@@ -265,7 +277,8 @@ public class EventService {
                         EventDto.SeatsCategoryDetails.builder()
                                 .id(categoryPrice.getCategory().getId())
                                 .name(categoryPrice.getCategory().getName())
-                                .price(categoryPrice.getPrice())
+                                .price(categoryPrice.getCurrentPrice())
+                                .initialPrice(categoryPrice.getPrice())
                                 .minRow(categoryPrice.getCategory().getMinRow())
                                 .maxRow(categoryPrice.getCategory().getMaxRow())
                                 .minSeat(categoryPrice.getCategory().getMinSeat())
