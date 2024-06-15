@@ -28,6 +28,8 @@ public class Raffle {
 
     private String partnerName;
 
+    private int totalParticipants;
+
     @ManyToOne
     private User user;
 
@@ -36,4 +38,8 @@ public class Raffle {
 
     @OneToOne
     private Voucher voucher;
+
+    public void increaseTotalParticipants() {
+        totalParticipants++;
+    }
 }

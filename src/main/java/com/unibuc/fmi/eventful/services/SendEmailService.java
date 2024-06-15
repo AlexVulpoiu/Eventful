@@ -24,6 +24,9 @@ public class SendEmailService {
     @Value("${eventful.app.frontend.url}")
     private String frontendUrl;
 
+    @Value("${eventful.app.events.review.url}")
+    private String eventsReviewUrl;
+
     @Value("${spring.mail.username}")
     private String senderEmail;
 
@@ -85,7 +88,8 @@ public class SendEmailService {
         javaMailSender.send(message);
     }
 
-    public void sendOrderSummaryEmail(Order order, Map<String, ByteArrayDataSource> pdfTickets, ByteArrayDataSource ics)
+    public void sendOrderSummaryEmail(Order order, Map<String, ByteArrayDataSource> pdfTickets, ByteArrayDataSource ics,
+                                      Voucher voucher)
             throws MessagingException, UnsupportedEncodingException {
         String toAddress = order.getUser().getEmail();
         String subject = "Eventful order " + order.getId() + " summary";
@@ -107,6 +111,7 @@ public class SendEmailService {
                     </table>
                 """
                 + "<br>You can find the tickets in the attachments of this email.<br>"
+                + "[[VOUCHER_DETAILS]]"
                 + "<br>Thank you,<br>"
                 + senderName;
 
@@ -193,6 +198,14 @@ public class SendEmailService {
         tableBody.append(paymentTotalRow);
 
         content = content.replace("[[TABLE_BODY]]", tableBody);
+
+        String voucherDetails = "";
+        if (voucher != null) {
+            voucherDetails = "<br>You have won a voucher of " + voucher.getValue() + "% discount at "
+                    + voucher.getName() + "! Use this code on partner's website: <strong>" + voucher.getCode() + "</string><br>";
+        }
+
+        content = content.replace("[[VOUCHER_DETAILS]]", voucherDetails);
         helper.setText(content, true);
 
         pdfTickets.forEach((pdfName, pdf) -> {
@@ -208,6 +221,62 @@ public class SendEmailService {
         } catch (MessagingException e) {
             throw new RuntimeException(e);
         }
+
+        javaMailSender.send(message);
+    }
+
+    public void sendRaffleWinnerEmail(Raffle raffle, User user, Voucher voucher)
+            throws MessagingException, UnsupportedEncodingException {
+        String toAddress = user.getEmail();
+        String subject = "Raffle winner for event: " + raffle.getEvent().getName();
+        String content = "Hello [[NAME]],<br><br>"
+                + "Congratulations!<br>"
+                + "You are the winner of the raffle for the event - [[EVENT_NAME]]!<br>"
+                + "The prize is a voucher of [[VOUCHER_VALUE]]% discount at [[PARTNER_NAME]]! "
+                + "Use this code on partner's website: <strong>[[VOUCHER_CODE]]</string>.<br>"
+                + "<br>Thank you,<br>"
+                + senderName;
+
+        MimeMessage message = javaMailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message);
+
+        helper.setFrom(senderEmail, senderName);
+        helper.setTo(toAddress);
+        helper.setSubject(subject);
+
+        content = content.replace("[[NAME]]", user.getFullName());
+        content = content.replace("[[EVENT_NAME]]", raffle.getEvent().getName());
+        content = content.replace("[[VOUCHER_VALUE]]", String.valueOf(voucher.getValue()));
+        content = content.replace("[[PARTNER_NAME]]", String.valueOf(voucher.getName()));
+        content = content.replace("[[VOUCHER_CODE]]", String.valueOf(voucher.getCode()));
+
+        helper.setText(content, true);
+
+        javaMailSender.send(message);
+    }
+
+    public void sendReviewReminder(Review review) throws MessagingException, UnsupportedEncodingException {
+        String toAddress = review.getUser().getEmail();
+        String subject = "Review for event " + review.getEvent().getName();
+        String content = "Hello [[NAME]],<br><br>"
+                + "From now on, you can add a review for event [[EVENT_NAME]].<br>"
+                + "Please access <a href=\"[[REVIEW_URL]]\">this URL</a> and let the organiser know your opinion on the event!<br>"
+                + "Also, you will receive 10 points after sending the review.<br>"
+                + "<br>Thank you,<br>"
+                + senderName;
+
+        MimeMessage message = javaMailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message);
+
+        helper.setFrom(senderEmail, senderName);
+        helper.setTo(toAddress);
+        helper.setSubject(subject);
+
+        content = content.replace("[[NAME]]", review.getUser().getFullName());
+        content = content.replace("[[EVENT_NAME]]", review.getEvent().getName());
+        content = content.replace("[[REVIEW_URL]]", eventsReviewUrl + "/" + review.getId());
+
+        helper.setText(content, true);
 
         javaMailSender.send(message);
     }

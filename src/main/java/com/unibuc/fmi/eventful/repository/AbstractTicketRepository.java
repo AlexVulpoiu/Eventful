@@ -12,13 +12,6 @@ public interface AbstractTicketRepository extends JpaRepository<AbstractTicket, 
 
     @Query("SELECT t " +
             "FROM AbstractTicket t " +
-            "WHERE t.validated = true AND t.order.user.id = :userId AND t.order.event.id = :eventId " +
-            "ORDER BY t.id " +
-            "LIMIT 1")
-    Optional<AbstractTicket> findValidatedByUserIdAndEventId(long userId, long eventId);
-
-    @Query("SELECT t " +
-            "FROM AbstractTicket t " +
             "WHERE t.externalId = :externalId AND t.order.event.id = :eventId " +
             "ORDER BY t.id " +
             "LIMIT 1")

@@ -63,6 +63,7 @@ public class TicketService {
     final EventService eventService;
     final S3Service s3Service;
     final SendEmailService sendEmailService;
+    final VoucherService voucherService;
     final TemplateEngine templateEngine;
     QRCodeWriter qrCodeWriter;
     ConverterProperties converterProperties;
@@ -145,7 +146,8 @@ public class TicketService {
             s3Service.uploadFile(S3Service.TICKETS_FOLDER, pdfName, new ByteArrayInputStream(pdfStream.toByteArray()));
             document.close();
         }
-        sendEmailService.sendOrderSummaryEmail(order, pdfTickets, eventService.generateIcsForEvent(order.getEvent()));
+        sendEmailService.sendOrderSummaryEmail(order, pdfTickets, eventService.generateIcsForEvent(order.getEvent()),
+                voucherService.generateVoucher(order));
     }
 
     public String parseTicketTemplate(Order order, AbstractTicket ticket) throws IOException, WriterException {

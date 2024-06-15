@@ -58,6 +58,7 @@ public class PaymentService {
     final PaymentIntentRepository paymentIntentRepository;
     final PaymentSessionRepository paymentSessionRepository;
     final UserRepository userRepository;
+    final CharitableCauseService charitableCauseService;
     final TicketService ticketService;
 
     @PostConstruct
@@ -180,6 +181,10 @@ public class PaymentService {
                 var user = order.get().getUser();
                 user.addPoints((int) (order.get().getTotal() / 5));
                 userRepository.save(user);
+                if (order.get().getEvent().getCharitableCause() != null) {
+                    charitableCauseService.updateCollectedAmount(order.get().getEvent().getCharitableCause(),
+                            order.get().getEvent().getCharityPercentage() * order.get().getTotal() / 100);
+                }
             }
 
         } else if (List.of("payment_intent.canceled", "payment_intent.created", "payment_intent.payment_failed",

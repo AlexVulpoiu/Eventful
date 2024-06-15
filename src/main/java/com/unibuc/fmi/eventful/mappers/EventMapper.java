@@ -24,6 +24,7 @@ public interface EventMapper {
     @Mapping(target = "standingCategories", ignore = true)
     @Mapping(target = "seatsCategories", ignore = true)
     @Mapping(target = "unavailableSeats", ignore = true)
+    @Mapping(target = "raffle", ignore = true)
     @Mapping(target = "organiserName", source = "organiser", qualifiedByName = "getOrganiserName")
     EventDto eventToEventDto(Event event);
 

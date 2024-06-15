@@ -1,4 +1,4 @@
-package com.unibuc.fmi.eventful.dto;
+package com.unibuc.fmi.eventful.dto.request.event;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -14,7 +14,7 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RaffleDto {
+public class AddRaffleDto {
 
     private int participantsLimit;
 
@@ -26,6 +26,4 @@ public class RaffleDto {
 
     @NotBlank
     private String partnerName;
-
-    private int totalParticipants;
 }

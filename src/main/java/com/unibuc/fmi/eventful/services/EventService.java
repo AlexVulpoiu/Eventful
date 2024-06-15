@@ -6,12 +6,14 @@ import com.unibuc.fmi.eventful.dto.LocationDto;
 import com.unibuc.fmi.eventful.dto.RaffleDto;
 import com.unibuc.fmi.eventful.dto.request.event.AddEventDto;
 import com.unibuc.fmi.eventful.dto.request.event.AddPromotionDto;
+import com.unibuc.fmi.eventful.dto.request.event.AddRaffleDto;
 import com.unibuc.fmi.eventful.dto.request.event.ChangeEventStatusDto;
 import com.unibuc.fmi.eventful.enums.EventStatus;
 import com.unibuc.fmi.eventful.enums.FeeSupporter;
 import com.unibuc.fmi.eventful.exceptions.BadRequestException;
 import com.unibuc.fmi.eventful.exceptions.ForbiddenException;
 import com.unibuc.fmi.eventful.exceptions.NotFoundException;
+import com.unibuc.fmi.eventful.mappers.CharitableCauseMapper;
 import com.unibuc.fmi.eventful.mappers.EventMapper;
 import com.unibuc.fmi.eventful.model.*;
 import com.unibuc.fmi.eventful.model.ids.CategoryPriceId;
@@ -48,6 +50,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -74,6 +77,7 @@ public class EventService {
     final CharitableCauseService charitableCauseService;
     final S3Service s3Service;
     final SendEmailService sendEmailService;
+    final CharitableCauseMapper charitableCauseMapper;
     final EventMapper eventMapper;
 
     @Transactional
@@ -244,14 +248,25 @@ public class EventService {
             eventDto.setDiscount(p.getValue());
             eventDto.setDiscountEndDate(p.getEndDate());
         });
-        if (event.getRaffle() != null) {
-            eventDto.setRaffle(RaffleDto.builder()
-                    .participantsLimit(event.getRaffle().getParticipantsLimit())
-                    .endDate(event.getRaffle().getEndDate())
-                    .prize(event.getRaffle().getPrize())
-                    .partnerName(event.getRaffle().getPartnerName())
-                    .build());
+
+        var raffle = event.getRaffle();
+        if (raffle != null) {
+            if ((raffle.getEndDate() != null && !raffle.getEndDate().isAfter(LocalDate.now()))
+                    || (raffle.getParticipantsLimit() > 0 && raffle.getTotalParticipants() < raffle.getParticipantsLimit())) {
+                eventDto.setRaffle(RaffleDto.builder()
+                        .participantsLimit(raffle.getParticipantsLimit())
+                        .endDate(raffle.getEndDate())
+                        .prize(raffle.getPrize())
+                        .partnerName(raffle.getPartnerName())
+                        .totalParticipants(raffle.getTotalParticipants())
+                        .build());
+            }
         }
+
+        if (event.getCharitableCause() != null) {
+            eventDto.setCharitableCause(charitableCauseMapper.charitableCauseToCharitableCauseDto(event.getCharitableCause()));
+        }
+
         eventDto.setLogo(s3Service.getObjectUrl(S3Service.EVENTS_FOLDER, event.getLogo()).toString());
         eventDto.setLocation(LocationDto.from(event.getLocation()));
         eventDto.setUnavailableSeats(new ArrayList<>());
@@ -320,7 +335,7 @@ public class EventService {
         return getEventDetails(eventId);
     }
 
-    public EventDto addRaffle(Long eventId, RaffleDto raffleDto, Long organiserId) {
+    public EventDto addRaffle(Long eventId, AddRaffleDto raffleDto, Long organiserId) {
         var event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found!"));
         if (!event.getOrganiser().getId().equals(organiserId)) {
@@ -341,6 +356,7 @@ public class EventService {
                 .endDate(raffleDto.getEndDate())
                 .prize(raffleDto.getPrize())
                 .partnerName(raffleDto.getPartnerName())
+                .totalParticipants(0)
                 .event(event)
                 .build();
         raffle = raffleRepository.save(raffle);

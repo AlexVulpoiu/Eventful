@@ -2,10 +2,10 @@ package com.unibuc.fmi.eventful.controllers;
 
 import com.unibuc.fmi.eventful.dto.EventDto;
 import com.unibuc.fmi.eventful.dto.EventPreviewDto;
-import com.unibuc.fmi.eventful.dto.RaffleDto;
 import com.unibuc.fmi.eventful.dto.TicketDto;
 import com.unibuc.fmi.eventful.dto.request.event.AddEventDto;
 import com.unibuc.fmi.eventful.dto.request.event.AddPromotionDto;
+import com.unibuc.fmi.eventful.dto.request.event.AddRaffleDto;
 import com.unibuc.fmi.eventful.dto.request.event.ChangeEventStatusDto;
 import com.unibuc.fmi.eventful.enums.EventStatus;
 import com.unibuc.fmi.eventful.security.services.UserDetailsImpl;
@@ -93,7 +93,7 @@ public class EventController {
 
     @PostMapping("/{eventId}/raffle")
     @PreAuthorize("hasAuthority('ORGANISER')")
-    public EventDto addRaffleForEvent(@PathVariable Long eventId, @Valid @RequestBody RaffleDto raffleDto,
+    public EventDto addRaffleForEvent(@PathVariable Long eventId, @Valid @RequestBody AddRaffleDto raffleDto,
                                       @AuthenticationPrincipal UserDetailsImpl principal) {
         return eventService.addRaffle(eventId, raffleDto, principal.getId());
     }

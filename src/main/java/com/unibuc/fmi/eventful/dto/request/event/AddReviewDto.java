@@ -1,10 +1,13 @@
 package com.unibuc.fmi.eventful.dto.request.event;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.UUID;
 
 @Data
 @Builder
@@ -12,7 +15,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AddReviewDto {
 
-    private long eventId;
+    @NotNull
+    private UUID reviewId;
 
     @NotBlank
     private String text;

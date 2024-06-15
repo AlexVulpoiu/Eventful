@@ -41,7 +41,6 @@ public class AddEventDto {
 
     private long locationId;
 
-    // TODO: tombole si promotii
     @Min(0)
     private int charityPercentage;
 

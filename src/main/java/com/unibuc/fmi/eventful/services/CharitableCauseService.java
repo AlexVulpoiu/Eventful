@@ -1,6 +1,5 @@
 package com.unibuc.fmi.eventful.services;
 
-import com.unibuc.fmi.eventful.dto.CharitableCauseDto;
 import com.unibuc.fmi.eventful.dto.request.charitablecause.AddCharitableCauseDto;
 import com.unibuc.fmi.eventful.exceptions.NotFoundException;
 import com.unibuc.fmi.eventful.mappers.CharitableCauseMapper;
@@ -12,9 +11,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -34,15 +30,9 @@ public class CharitableCauseService {
         return charitableCause;
     }
 
-    public List<CharitableCauseDto> getCharitableCausesForOrganiser(Long organiserId, String search) {
-        Organiser organiser = organiserRepository.findById(organiserId)
-                .orElseThrow(() -> new NotFoundException("Organiser with id " + organiserId + " not found!"));
-
-        var charitableCauses = organiser.getCharitableCauses().stream();
-        if (Optional.ofNullable(search).isPresent()) {
-            charitableCauses = charitableCauses.filter((c -> c.getName().toLowerCase().contains(search.toLowerCase())));
-        }
-
-        return charitableCauses.map(charitableCauseMapper::charitableCauseToCharitableCauseDto).toList();
+    public void updateCollectedAmount(CharitableCause charitableCause, double amount) {
+        var collectedAmount = charitableCause.getCollectedAmount();
+        charitableCause.setCollectedAmount(collectedAmount + amount);
+        charitableCauseRepository.save(charitableCause);
     }
 }

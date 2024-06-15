@@ -42,6 +42,8 @@ public class EventDto {
 
     private RaffleDto raffle;
 
+    private CharitableCauseDto charitableCause;
+
     private List<SeatsCategoryDetails> seatsCategories = new ArrayList<>();
 
     private List<StandingCategoryDto> standingCategories = new ArrayList<>();

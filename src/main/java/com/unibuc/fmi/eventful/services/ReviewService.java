@@ -1,72 +1,93 @@
 package com.unibuc.fmi.eventful.services;
 
-import com.unibuc.fmi.eventful.dto.ReviewDto;
 import com.unibuc.fmi.eventful.dto.request.event.AddReviewDto;
-import com.unibuc.fmi.eventful.exceptions.BadRequestException;
+import com.unibuc.fmi.eventful.exceptions.ForbiddenException;
 import com.unibuc.fmi.eventful.exceptions.NotFoundException;
-import com.unibuc.fmi.eventful.mappers.ReviewMapper;
 import com.unibuc.fmi.eventful.model.Review;
-import com.unibuc.fmi.eventful.repository.*;
+import com.unibuc.fmi.eventful.repository.EventRepository;
+import com.unibuc.fmi.eventful.repository.OrderRepository;
+import com.unibuc.fmi.eventful.repository.ReviewRepository;
+import com.unibuc.fmi.eventful.repository.UserRepository;
+import jakarta.mail.MessagingException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.UnsupportedEncodingException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ReviewService {
 
-    AbstractTicketRepository abstractTicketRepository;
     EventRepository eventRepository;
-    OrganiserRepository organiserRepository;
+    OrderRepository orderRepository;
     ReviewRepository reviewRepository;
     UserRepository userRepository;
-    ReviewMapper reviewMapper;
+    SendEmailService sendEmailService;
 
-    // TODO: refactor logic
+    @Scheduled(cron = "0 0 9 ? * *")
+    public void notifyUsersForEventsReviews() throws MessagingException, UnsupportedEncodingException {
+        log.info("Starting job for sending events reviews notifications");
+        var events = eventRepository.getEventsEndedAt(LocalDate.now().minusDays(2));
+
+        for (var event : events) {
+            log.info("Sending notifications for event {}", event.getId());
+            var participants = orderRepository.getParticipantsForEvent(event.getId());
+            for (var participant : participants) {
+                var user = userRepository.findById(participant)
+                        .orElseThrow(() -> new NotFoundException("User with id " + participant + " doesn't exist!"));
+
+                log.info("Sending notification to user {}", user.getId());
+                Review review = reviewRepository.save(new Review(UUID.randomUUID(), null, null, event, user));
+                sendEmailService.sendReviewReminder(review);
+            }
+        }
+
+        log.info("Ending job for sending events reviews notifications");
+    }
+
+    public void checkAccess(UUID reviewId, Long userId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User with id " + userId + " not found!"));
+
+        var review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new NotFoundException("Review with id " + reviewId + " doesn't exist!"));
+        if (!review.getUser().getId().equals(userId)) {
+            throw new ForbiddenException("You are not allowed to perform this operation!");
+        }
+        if (review.getText() != null) {
+            throw new ForbiddenException("The review can't be completed more than once!");
+        }
+    }
+
     @Transactional
-    public ReviewDto addReview(AddReviewDto addReviewDto, long userId) {
+    public void addReview(AddReviewDto addReviewDto, long userId) {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with id " + userId + " not found!"));
 
-        long eventId = addReviewDto.getEventId();
-        var event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found!"));
-        if (LocalDateTime.now().isBefore(event.getEndDate())) {
-            throw new BadRequestException("Reviews can be added only after the end of the event!");
+        var review = reviewRepository.findById(addReviewDto.getReviewId())
+                .orElseThrow(() -> new NotFoundException("Review with id " + addReviewDto.getReviewId() + " doesn't exist!"));
+        if (!review.getUser().getId().equals(userId)) {
+            throw new ForbiddenException("You are not allowed to perform this operation!");
+        }
+        if (review.getText() != null) {
+            throw new ForbiddenException("The review can't be completed more than once!");
         }
 
-        if (reviewRepository.getNumberOfReviewsPerEventByUser(eventId, userId) >= 2) {
-            throw new BadRequestException("You can't add more than two reviews per event!");
-        }
-        var lastReview = reviewRepository.getLastReviewFromEventByUser(eventId, userId);
-        if (lastReview.isPresent() && LocalDateTime.now().minusHours(72).isBefore(lastReview.get().getDateTime())) {
-            throw new BadRequestException("You have to wait for at least 3 days to add one more review for the same event!");
-        }
+        review.setText(addReviewDto.getText());
+        review.setDateTime(LocalDateTime.now());
+        reviewRepository.save(review);
 
-        var isParticipant = abstractTicketRepository.findValidatedByUserIdAndEventId(userId, eventId).isPresent();
-        var review = Review.builder()
-                .text(addReviewDto.getText())
-                .dateTime(LocalDateTime.now())
-                .event(event)
-                .user(user)
-                .build();
-
-        if (isParticipant) {
-            user.addPoints(10);
-            userRepository.save(user);
-        }
-
-        event.addReview(review);
-        eventRepository.save(event);
-
-        var organiser = event.getOrganiser();
-        organiserRepository.save(organiser);
-
-        return reviewMapper.reviewToReviewDto(review);
+        user.addPoints(10);
+        userRepository.save(user);
     }
 }

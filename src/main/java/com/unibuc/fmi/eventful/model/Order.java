@@ -44,7 +44,7 @@ public class Order {
     @OneToOne
     private PaymentSession paymentSession;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL)
     private Voucher voucher;
 
     public Order(User user, Event event) {

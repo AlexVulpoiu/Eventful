@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,4 +24,9 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             "FROM Event e " +
             "WHERE e.status = 'REJECTED' AND e.updatedAt < :dateTime")
     List<Event> getRejectedEventsNotUpdatedSince(LocalDateTime dateTime);
+
+    @Query("SELECT e " +
+            "FROM Event e " +
+            "WHERE DATE(e.endDate) = :date")
+    List<Event> getEventsEndedAt(LocalDate date);
 }
