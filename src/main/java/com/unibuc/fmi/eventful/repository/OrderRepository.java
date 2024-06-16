@@ -28,4 +28,15 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 "                                                    FROM AbstractTicket t " +
         "                                            WHERE t.order.id = o.id AND t.validated = true)")
     List<Long> getParticipantsForEvent(long eventId);
+
+    @Query("SELECT o " +
+            "FROM Order o " +
+            "WHERE o.paymentSession.paymentStatus = 'COMPLETE' AND o.event.id = :eventId " +
+            "ORDER BY o.orderDate DESC")
+    List<Order> getOrdersForEvent(Long eventId);
+
+    @Query("SELECT SUM(o.total) " +
+            "FROM Order o " +
+            "WHERE o.paymentSession IS NOT null AND o.paymentSession.paymentStatus = 'COMPLETE' AND o.event.id = :eventId")
+    Double getIncomeForEvent(Long eventId);
 }

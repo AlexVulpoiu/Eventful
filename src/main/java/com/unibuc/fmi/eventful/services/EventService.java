@@ -1,9 +1,6 @@
 package com.unibuc.fmi.eventful.services;
 
-import com.unibuc.fmi.eventful.dto.EventDto;
-import com.unibuc.fmi.eventful.dto.EventPreviewDto;
-import com.unibuc.fmi.eventful.dto.LocationDto;
-import com.unibuc.fmi.eventful.dto.RaffleDto;
+import com.unibuc.fmi.eventful.dto.*;
 import com.unibuc.fmi.eventful.dto.request.event.AddEventDto;
 import com.unibuc.fmi.eventful.dto.request.event.AddPromotionDto;
 import com.unibuc.fmi.eventful.dto.request.event.AddRaffleDto;
@@ -52,10 +49,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.TimeZone;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -67,8 +61,10 @@ public class EventService {
     private int fee;
 
     final AbstractLocationRepository abstractLocationRepository;
+    final AbstractUserRepository abstractUserRepository;
     final CategoryPriceRepository categoryPriceRepository;
     final EventRepository eventRepository;
+    final OrderRepository orderRepository;
     final OrganiserRepository organiserRepository;
     final RaffleRepository raffleRepository;
     final SeatedTicketRepository seatedTicketRepository;
@@ -96,7 +92,7 @@ public class EventService {
             throw new BadRequestException("The selected location is not available at the requested date and time!");
         }
 
-        var event = eventMapper.addEventDtoToEvent(addEventDto);
+        var event = eventMapper.addOrEditEventDtoToEvent(addEventDto);
         event.setStatus(EventStatus.PENDING);
         event.setLocation(location);
         event.setOrganiser(organiser);
@@ -239,6 +235,25 @@ public class EventService {
         return new PageImpl<>(eventPreviews, pageable, events.getTotalElements());
     }
 
+    public List<EventPreviewDto> getAllEvents(EventStatus status, boolean ended, Long userId) {
+        var user = abstractUserRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User with id " + userId + " not found!"));
+
+        List<Event> events;
+        if (user instanceof Organiser) {
+            events = ended ? eventRepository.getEventsForOrganiserEndedBefore(userId, LocalDate.now())
+                    : eventRepository.getEventsForOrganiserByStatusEndingAfter(userId, status, LocalDate.now());
+        } else {
+            events = ended ? eventRepository.getEventsEndedBefore(LocalDate.now())
+                    : eventRepository.getEventsByStatusEndingAfter(status, LocalDate.now());
+        }
+
+        var eventPreviews = events.stream().map(eventMapper::eventToEventPreviewDto).toList();
+        eventPreviews.forEach(e -> e.setLogo(s3Service.getObjectUrl(S3Service.EVENTS_FOLDER, e.getLogo()).toString()));
+
+        return eventPreviews;
+    }
+
     public EventDto getEventDetails(Long eventId) {
         var event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found!"));
@@ -251,7 +266,7 @@ public class EventService {
 
         var raffle = event.getRaffle();
         if (raffle != null) {
-            if ((raffle.getEndDate() != null && !raffle.getEndDate().isAfter(LocalDate.now()))
+            if ((raffle.getEndDate() != null && !raffle.getEndDate().isBefore(LocalDate.now()))
                     || (raffle.getParticipantsLimit() > 0 && raffle.getTotalParticipants() < raffle.getParticipantsLimit())) {
                 eventDto.setRaffle(RaffleDto.builder()
                         .participantsLimit(raffle.getParticipantsLimit())
@@ -381,5 +396,146 @@ public class EventService {
             eventRepository.delete(e);
         }
         log.info("Ending job for rejected events deletion");
+    }
+
+    public EventOrdersDto getOrdersDetailsForEvent(Long eventId, Long organiserId) {
+        organiserRepository.findById(organiserId)
+                .orElseThrow(() -> new NotFoundException("Organiser with " + organiserId + " not found!"));
+
+        var event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found!"));
+        if (!event.getOrganiser().getId().equals(organiserId)) {
+            throw new ForbiddenException("You are not allowed to perform this action!");
+        }
+
+        List<OrderForEventDetailsDto> orders = new ArrayList<>();
+
+        var total = 0.0;
+        var ordersForEvent = orderRepository.getOrdersForEvent(eventId);
+        for (var order : ordersForEvent) {
+            orders.add(OrderForEventDetailsDto.builder()
+                    .id(order.getId())
+                    .orderDate(order.getOrderDate())
+                    .total(order.getTotal())
+                    .tickets(order.getTickets().size())
+                    .build());
+            total += order.getTotal();
+        }
+
+        return EventOrdersDto.builder()
+                .totalAmount(total)
+                .charitableEvent(event.getCharityPercentage() > 0)
+                .charityAmount(event.getCharityPercentage() * total / 100)
+                .orders(orders)
+                .build();
+    }
+
+    public List<ReviewDetailsDto> getReviewsForEvent(Long eventId, Long organiserId) {
+        organiserRepository.findById(organiserId)
+                .orElseThrow(() -> new NotFoundException("Organiser with " + organiserId + " not found!"));
+
+        var event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found!"));
+        if (!event.getOrganiser().getId().equals(organiserId)) {
+            throw new ForbiddenException("You are not allowed to perform this action!");
+        }
+
+        List<ReviewDetailsDto> reviews = new ArrayList<>();
+
+        for (var review : event.getReviews()) {
+            reviews.add(ReviewDetailsDto.builder()
+                    .text(review.getText())
+                    .dateTime(review.getDateTime())
+                    .build());
+        }
+
+        reviews.sort((r1, r2) -> r2.getDateTime().compareTo(r1.getDateTime()));
+
+        return reviews;
+    }
+
+    @Transactional
+    public void updateName(Long eventId, String name, Long organiserId) {
+        organiserRepository.findById(organiserId)
+                .orElseThrow(() -> new NotFoundException("Organiser with " + organiserId + " not found!"));
+
+        var event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found!"));
+        if (!event.getOrganiser().getId().equals(organiserId)) {
+            throw new ForbiddenException("You are not allowed to perform this action!");
+        }
+
+        if (!name.equals(event.getName())) {
+            event.setName(name);
+            event.setUpdatedAt(LocalDateTime.now());
+            eventRepository.save(event);
+        }
+    }
+
+    @Transactional
+    public void updateDescription(Long eventId, String description, Long organiserId) {
+        organiserRepository.findById(organiserId)
+                .orElseThrow(() -> new NotFoundException("Organiser with " + organiserId + " not found!"));
+
+        var event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found!"));
+        if (!event.getOrganiser().getId().equals(organiserId)) {
+            throw new ForbiddenException("You are not allowed to perform this action!");
+        }
+
+        if (!description.equals(event.getDescription())) {
+            event.setDescription(description);
+            event.setUpdatedAt(LocalDateTime.now());
+            eventRepository.save(event);
+        }
+    }
+
+    @Transactional
+    public void updateSeatedPrices(Long eventId, Map<Long, Integer> categoriesPrices, Long organiserId) {
+        organiserRepository.findById(organiserId)
+                .orElseThrow(() -> new NotFoundException("Organiser with " + organiserId + " not found!"));
+
+        var event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found!"));
+        if (!event.getOrganiser().getId().equals(organiserId)) {
+            throw new ForbiddenException("You are not allowed to perform this action!");
+        }
+
+        for (var categoryId : categoriesPrices.keySet()) {
+            seatsCategoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new NotFoundException("Seats category with id " + categoryId + " not found!"));
+
+            var categoryPriceId = new CategoryPriceId(categoryId, event.getId());
+            var categoryPrice = categoryPriceRepository.findById(categoryPriceId)
+                    .orElseThrow(() -> new NotFoundException("Category with id " + categoryId + " not found!"));
+            categoryPrice.setPrice(computePrice(categoriesPrices.get(categoryId), event.getFeeSupporter()));
+            categoryPriceRepository.save(categoryPrice);
+        }
+
+        event.setUpdatedAt(LocalDateTime.now());
+        eventRepository.save(event);
+    }
+
+    @Transactional
+    public void updateStandingPrices(Long eventId, Map<String, Integer> categoriesPrices, Long organiserId) {
+        organiserRepository.findById(organiserId)
+                .orElseThrow(() -> new NotFoundException("Organiser with " + organiserId + " not found!"));
+
+        var event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found!"));
+        if (!event.getOrganiser().getId().equals(organiserId)) {
+            throw new ForbiddenException("You are not allowed to perform this action!");
+        }
+
+        for (var categoryName : categoriesPrices.keySet()) {
+            var standingCategoryId = new StandingCategoryId(event.getLocation().getId(), event.getId(), categoryName);
+            var standingCategory = standingCategoryRepository.findById(standingCategoryId)
+                    .orElseThrow(() -> new NotFoundException("Category with name " + categoryName + " not found!"));
+            standingCategory.setPrice(computePrice(categoriesPrices.get(categoryName), event.getFeeSupporter()));
+            standingCategoryRepository.save(standingCategory);
+        }
+
+        event.setUpdatedAt(LocalDateTime.now());
+        eventRepository.save(event);
     }
 }

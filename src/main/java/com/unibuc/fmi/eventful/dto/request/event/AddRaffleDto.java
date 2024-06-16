@@ -16,6 +16,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class AddRaffleDto {
 
+    @Min(0)
     private int participantsLimit;
 
     private LocalDate endDate;

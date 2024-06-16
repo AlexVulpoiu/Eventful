@@ -1,5 +1,6 @@
 package com.unibuc.fmi.eventful.controllers;
 
+import com.unibuc.fmi.eventful.dto.OrganiserProfileDto;
 import com.unibuc.fmi.eventful.dto.ProfileDto;
 import com.unibuc.fmi.eventful.security.services.UserDetailsImpl;
 import com.unibuc.fmi.eventful.services.ProfileService;
@@ -30,5 +31,11 @@ public class UsersProfileController {
     @PreAuthorize("hasAuthority('USER')")
     public int getAvailablePoints(@AuthenticationPrincipal UserDetailsImpl principal) {
         return profileService.getAvailablePoints(principal.getId());
+    }
+
+    @GetMapping("/organiser")
+    @PreAuthorize("hasAuthority('ORGANISER')")
+    public OrganiserProfileDto getOrganiserProfile(@AuthenticationPrincipal UserDetailsImpl principal) {
+        return profileService.getOrganiserProfile(principal.getId());
     }
 }

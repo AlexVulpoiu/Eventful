@@ -87,6 +87,6 @@ public class Event {
     }
 
     public Optional<Promotion> getActivePromotion() {
-        return promotions.stream().filter(p -> p.getEndDate().isEqual(LocalDate.now()) || p.getEndDate().isAfter(LocalDate.now())).findFirst();
+        return promotions.stream().filter(p -> !p.getEndDate().isBefore(LocalDate.now())).findFirst();
     }
 }

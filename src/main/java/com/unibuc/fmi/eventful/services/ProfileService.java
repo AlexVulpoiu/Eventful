@@ -1,10 +1,16 @@
 package com.unibuc.fmi.eventful.services;
 
 import com.unibuc.fmi.eventful.dto.OrderDetailsDto;
+import com.unibuc.fmi.eventful.dto.OrganiserProfileDto;
 import com.unibuc.fmi.eventful.dto.ProfileDto;
 import com.unibuc.fmi.eventful.dto.TicketDetailsDto;
 import com.unibuc.fmi.eventful.enums.PaymentIntentStatus;
 import com.unibuc.fmi.eventful.exceptions.NotFoundException;
+import com.unibuc.fmi.eventful.mappers.AddressMapper;
+import com.unibuc.fmi.eventful.mappers.BankAccountMapper;
+import com.unibuc.fmi.eventful.model.LegalPerson;
+import com.unibuc.fmi.eventful.model.Person;
+import com.unibuc.fmi.eventful.repository.OrganiserRepository;
 import com.unibuc.fmi.eventful.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +25,9 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ProfileService {
 
+    AddressMapper addressMapper;
+    BankAccountMapper bankAccountMapper;
+    OrganiserRepository organiserRepository;
     UserRepository userRepository;
     S3Service s3Service;
 
@@ -65,5 +74,28 @@ public class ProfileService {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with id " + userId + " not found!"));
         return user.getAvailablePoints();
+    }
+
+    public OrganiserProfileDto getOrganiserProfile(Long organiserId) {
+        var organiser = organiserRepository.findById(organiserId)
+                .orElseThrow(() -> new NotFoundException("Organiser with id " + organiserId + " not found!"));
+
+        OrganiserProfileDto organiserProfileDto = OrganiserProfileDto.builder()
+                .name(organiser.getFullName())
+                .email(organiser.getEmail())
+                .phone(organiser.getPhone())
+                .address(addressMapper.addressToAddressDto(organiser.getAddress()))
+                .bankAccount(bankAccountMapper.bankAccountToBankAccountDto(organiser.getBankAccount()))
+                .commerceRegistrationNumber(organiser.getCommerceRegistrationNumber())
+                .build();
+
+        if (organiser instanceof LegalPerson) {
+            organiserProfileDto.setCui(((LegalPerson) organiser).getCui());
+            organiserProfileDto.setLegalName(((LegalPerson) organiser).getName());
+        } else {
+            organiserProfileDto.setCnp(((Person) organiser).getCnp());
+        }
+
+        return organiserProfileDto;
     }
 }

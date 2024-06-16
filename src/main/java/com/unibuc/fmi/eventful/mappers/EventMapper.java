@@ -15,7 +15,7 @@ public interface EventMapper {
 
     @Mapping(target = "categoryPrices", ignore = true)
     @Mapping(target = "standingCategories", ignore = true)
-    Event addEventDtoToEvent(AddEventDto addEventDto);
+    Event addOrEditEventDtoToEvent(AddEventDto addEventDto);
 
     @Mapping(target = "location", source = "location", qualifiedByName = "getShortAddressWithName")
     EventPreviewDto eventToEventPreviewDto(Event event);

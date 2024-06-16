@@ -5,19 +5,19 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CharitableCauseDto {
+public class EventOrdersDto {
 
-    private long id;
+    private double totalAmount;
 
-    private String name;
+    private boolean charitableEvent;
 
-    private String description;
+    private double charityAmount;
 
-    private int neededAmount;
-
-    private double collectedAmount;
+    private List<OrderForEventDetailsDto> orders;
 }

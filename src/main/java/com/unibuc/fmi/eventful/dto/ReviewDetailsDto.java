@@ -5,19 +5,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CharitableCauseDto {
+public class ReviewDetailsDto {
 
-    private long id;
+    private String text;
 
-    private String name;
+    private LocalDateTime dateTime;
 
-    private String description;
-
-    private int neededAmount;
-
-    private double collectedAmount;
 }

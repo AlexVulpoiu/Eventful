@@ -1,6 +1,6 @@
 package com.unibuc.fmi.eventful.dto.request.event;
 
-import com.unibuc.fmi.eventful.dto.request.charitablecause.AddCharitableCauseDto;
+import com.unibuc.fmi.eventful.dto.request.charitablecause.AddOrEditCharitableCauseDto;
 import com.unibuc.fmi.eventful.enums.FeeSupporter;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Future;
@@ -44,7 +44,7 @@ public class AddEventDto {
     @Min(0)
     private int charityPercentage;
 
-    private AddCharitableCauseDto addCharitableCause;
+    private AddOrEditCharitableCauseDto addCharitableCause;
 
     private List<AddCategoryPriceDto> categoriesPrices;
 

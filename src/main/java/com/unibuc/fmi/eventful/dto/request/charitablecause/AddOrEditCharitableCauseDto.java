@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AddCharitableCauseDto {
+public class AddOrEditCharitableCauseDto {
 
     @NotBlank
     private String name;

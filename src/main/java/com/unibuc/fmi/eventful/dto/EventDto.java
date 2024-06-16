@@ -1,5 +1,6 @@
 package com.unibuc.fmi.eventful.dto;
 
+import com.unibuc.fmi.eventful.enums.EventStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,6 +28,8 @@ public class EventDto {
     private LocalDateTime endDate;
 
     private String logo;
+
+    private EventStatus status;
 
     private int charityPercentage;
 
