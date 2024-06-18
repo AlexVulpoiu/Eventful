@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -47,15 +46,19 @@ public class LocationService {
     }
 
     public List<StandingLocationDto> getStandingLocations(String search) {
-        List<StandingLocation> standingLocations = Optional.ofNullable(search).isPresent()
-                ? standingLocationRepository.getStandingLocations(search) : standingLocationRepository.findAll();
+        if (search == null || search.isBlank()) {
+            search = "";
+        }
+        List<StandingLocation> standingLocations = standingLocationRepository.getStandingLocationsOrderedByName(search);
 
         return standingLocations.stream().map(locationMapper::standingLocationToDto).toList();
     }
 
     public List<SeatedLocationDto> getSeatedLocations(String search) {
-        List<SeatedLocation> seatedLocations = Optional.ofNullable(search).isPresent()
-                ? seatedLocationRepository.getSeatedLocations(search) : seatedLocationRepository.findAll();
+        if (search == null || search.isBlank()) {
+            search = "";
+        }
+        List<SeatedLocation> seatedLocations = seatedLocationRepository.getSeatedLocationsOrderedByName(search);
 
         return seatedLocations.stream().map(locationMapper::seatedLocationToDto).toList();
     }

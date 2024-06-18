@@ -1,6 +1,7 @@
 package com.unibuc.fmi.eventful.services;
 
 import com.unibuc.fmi.eventful.enums.EventStatus;
+import com.unibuc.fmi.eventful.enums.OrganiserStatus;
 import com.unibuc.fmi.eventful.model.*;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -82,6 +83,30 @@ public class SendEmailService {
         content = content.replace("[[NAME]]", event.getOrganiser().getFullName());
         content = content.replace("[[EVENT_NAME]]", event.getName());
         content = content.replace("[[STATUS]]", String.valueOf(event.getStatus()));
+
+        helper.setText(content, true);
+
+        javaMailSender.send(message);
+    }
+
+    public void sendOrganiserStatusChangedEmail(Organiser organiser) throws MessagingException, UnsupportedEncodingException {
+        String toAddress = organiser.getEmail();
+        String subject = "Status changed for your account";
+        String content = "Hello [[NAME]],<br><br>"
+                + "Your organiser account was [[STATUS]] by one of Eventful admins.<br>"
+                + (OrganiserStatus.REJECTED.equals(organiser.getStatus()) ? "You will be contacted soon by one of the admins." : "From now on, you can start creating events!")
+                + "<br><br>Thank you,<br>"
+                + senderName;
+
+        MimeMessage message = javaMailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message);
+
+        helper.setFrom(senderEmail, senderName);
+        helper.setTo(toAddress);
+        helper.setSubject(subject);
+
+        content = content.replace("[[NAME]]", organiser.getFullName());
+        content = content.replace("[[STATUS]]", organiser.getStatus().name());
 
         helper.setText(content, true);
 

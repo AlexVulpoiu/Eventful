@@ -10,8 +10,9 @@ import java.util.List;
 @Repository
 public interface SeatedLocationRepository extends JpaRepository<SeatedLocation, Long> {
 
-    @Query("SELECT sl" +
-            " FROM SeatedLocation sl" +
-            " WHERE sl.name LIKE %:search% OR sl.city LIKE %:search%")
-    List<SeatedLocation> getSeatedLocations(String search);
+    @Query("SELECT sl " +
+            "FROM SeatedLocation sl " +
+            "WHERE sl.name LIKE %:search% OR sl.city LIKE %:search% " +
+            "ORDER BY sl.name ASC")
+    List<SeatedLocation> getSeatedLocationsOrderedByName(String search);
 }

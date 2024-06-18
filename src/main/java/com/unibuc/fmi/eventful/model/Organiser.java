@@ -1,5 +1,6 @@
 package com.unibuc.fmi.eventful.model;
 
+import com.unibuc.fmi.eventful.enums.OrganiserStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,6 +20,9 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Organiser extends AbstractUser {
+
+    @Enumerated(EnumType.STRING)
+    protected OrganiserStatus status;
 
     protected String commerceRegistrationNumber;
 

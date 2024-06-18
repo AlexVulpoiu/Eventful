@@ -81,9 +81,11 @@ public class ProfileService {
                 .orElseThrow(() -> new NotFoundException("Organiser with id " + organiserId + " not found!"));
 
         OrganiserProfileDto organiserProfileDto = OrganiserProfileDto.builder()
+                .id(organiserId)
                 .name(organiser.getFullName())
                 .email(organiser.getEmail())
                 .phone(organiser.getPhone())
+                .status(organiser.getStatus())
                 .address(addressMapper.addressToAddressDto(organiser.getAddress()))
                 .bankAccount(bankAccountMapper.bankAccountToBankAccountDto(organiser.getBankAccount()))
                 .commerceRegistrationNumber(organiser.getCommerceRegistrationNumber())

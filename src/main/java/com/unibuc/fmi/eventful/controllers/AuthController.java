@@ -6,6 +6,7 @@ import com.unibuc.fmi.eventful.dto.request.signup.PersonSignupRequest;
 import com.unibuc.fmi.eventful.dto.request.signup.UserSignupRequest;
 import com.unibuc.fmi.eventful.dto.response.JwtResponse;
 import com.unibuc.fmi.eventful.dto.response.MessageResponse;
+import com.unibuc.fmi.eventful.enums.OrganiserStatus;
 import com.unibuc.fmi.eventful.exceptions.BadRequestException;
 import com.unibuc.fmi.eventful.mappers.OrganiserMapper;
 import com.unibuc.fmi.eventful.model.AbstractUser;
@@ -117,6 +118,7 @@ public class AuthController {
 
         request.setPassword(passwordEncoder.encode(request.getPassword()));
         var person = organiserMapper.personSignupRequestToPerson(request);
+        person.setStatus(OrganiserStatus.PENDING);
         person.setRoles(roles);
         person.setVerificationCode(UUID.randomUUID());
         personRepository.save(person);
@@ -142,6 +144,7 @@ public class AuthController {
 
         request.setPassword(passwordEncoder.encode(request.getPassword()));
         var legalPerson = organiserMapper.legalPersonSignupRequestToLegalPerson(request);
+        legalPerson.setStatus(OrganiserStatus.PENDING);
         legalPerson.setRoles(roles);
         legalPerson.setVerificationCode(UUID.randomUUID());
         legalPersonRepository.save(legalPerson);

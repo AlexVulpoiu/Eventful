@@ -7,6 +7,7 @@ import com.unibuc.fmi.eventful.dto.request.event.AddRaffleDto;
 import com.unibuc.fmi.eventful.dto.request.event.ChangeEventStatusDto;
 import com.unibuc.fmi.eventful.enums.EventStatus;
 import com.unibuc.fmi.eventful.enums.FeeSupporter;
+import com.unibuc.fmi.eventful.enums.OrganiserStatus;
 import com.unibuc.fmi.eventful.exceptions.BadRequestException;
 import com.unibuc.fmi.eventful.exceptions.ForbiddenException;
 import com.unibuc.fmi.eventful.exceptions.NotFoundException;
@@ -82,6 +83,10 @@ public class EventService {
                 .orElseThrow(() -> new NotFoundException("Organiser with id " + organiserId + " not found!"));
         AbstractLocation location = abstractLocationRepository.findById(addEventDto.getLocationId())
                 .orElseThrow(() -> new NotFoundException("Location with id " + addEventDto.getLocationId() + " not found!"));
+
+        if (!OrganiserStatus.ACCEPTED.equals(organiser.getStatus())) {
+            throw new ForbiddenException("You are not allowed to perform this operation!");
+        }
 
         if (addEventDto.getEndDate().isBefore(addEventDto.getStartDate())) {
             throw new BadRequestException("End date can't be before start date!");
@@ -165,6 +170,9 @@ public class EventService {
         var event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found!"));
 
+        if (!EventStatus.PENDING.equals(event.getStatus())) {
+            throw new BadRequestException("The status of this event can't be changed!");
+        }
         if (EventStatus.REJECTED.equals(changeEventStatusDto.getStatus())
                 && (changeEventStatusDto.getReason() == null || changeEventStatusDto.getReason().isBlank())) {
             throw new BadRequestException("A rejection reason must be provided!");
