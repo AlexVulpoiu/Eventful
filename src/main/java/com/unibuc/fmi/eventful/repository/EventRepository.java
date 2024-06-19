@@ -28,6 +28,11 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     @Query("SELECT e " +
             "FROM Event e " +
+            "WHERE DATE(e.startDate) = :date")
+    List<Event> getEventsStartingAt(LocalDate date);
+
+    @Query("SELECT e " +
+            "FROM Event e " +
             "WHERE DATE(e.endDate) = :date")
     List<Event> getEventsEndedAt(LocalDate date);
 

@@ -13,6 +13,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +36,8 @@ public class SendEmailService {
     private String senderName;
 
     private final JavaMailSender javaMailSender;
+
+    private final static DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy, HH:mm");
 
     public void sendVerificationEmail(AbstractUser user) throws MessagingException, UnsupportedEncodingException {
         String toAddress = user.getEmail();
@@ -300,6 +303,32 @@ public class SendEmailService {
         content = content.replace("[[NAME]]", review.getUser().getFullName());
         content = content.replace("[[EVENT_NAME]]", review.getEvent().getName());
         content = content.replace("[[REVIEW_URL]]", eventsReviewUrl + "/" + review.getId());
+
+        helper.setText(content, true);
+
+        javaMailSender.send(message);
+    }
+
+    public void sendParticipationReminder(User user, Event event) throws MessagingException, UnsupportedEncodingException {
+        String toAddress = user.getEmail();
+        String subject = "Participation reminder for event " + event.getName();
+        String content = "Hello [[NAME]],<br><br>"
+                + "You have tickets for [[EVENT_NAME]], that will start on [[EVENT_TIMESTAMP]] at [[EVENT_LOCATION]].<br>"
+                + "See you there!<br>"
+                + "<br>Thank you,<br>"
+                + senderName;
+
+        MimeMessage message = javaMailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message);
+
+        helper.setFrom(senderEmail, senderName);
+        helper.setTo(toAddress);
+        helper.setSubject(subject);
+
+        content = content.replace("[[NAME]]", user.getFullName());
+        content = content.replace("[[EVENT_NAME]]", event.getName());
+        content = content.replace("[[EVENT_TIMESTAMP]]", event.getStartDate().format(DATE_TIME_FORMATTER));
+        content = content.replace("[[EVENT_LOCATION]]", event.getLocation().getFullAddressWithName());
 
         helper.setText(content, true);
 

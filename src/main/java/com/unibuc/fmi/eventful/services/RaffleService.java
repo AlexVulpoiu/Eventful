@@ -1,6 +1,7 @@
 package com.unibuc.fmi.eventful.services;
 
 import com.unibuc.fmi.eventful.exceptions.NotFoundException;
+import com.unibuc.fmi.eventful.model.User;
 import com.unibuc.fmi.eventful.repository.OrderRepository;
 import com.unibuc.fmi.eventful.repository.RaffleRepository;
 import com.unibuc.fmi.eventful.repository.UserRepository;
@@ -36,7 +37,7 @@ public class RaffleService {
         var raffles = raffleRepository.findAllEndedAt(LocalDate.now().minusDays(1));
         log.info(raffles.size() + " raffles ended yesterday");
         for (var raffle : raffles) {
-            var customers = orderRepository.getCustomersForEventUntil(raffle.getEvent().getId(), LocalDate.now().minusDays(1).atTime(23, 59, 59));
+            var customers = orderRepository.getCustomersForEventUntil(raffle.getEvent().getId(), LocalDate.now().minusDays(1).atTime(23, 59, 59)).stream().map(User::getId).toList();
             if (!customers.isEmpty()) {
                 int winner = random.nextInt(customers.size());
                 log.info("Winner for raffle associated with event " + raffle.getEvent().getId() + " is user " + customers.get(winner));

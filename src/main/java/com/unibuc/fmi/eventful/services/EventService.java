@@ -397,22 +397,6 @@ public class EventService {
         return getEventDetails(eventId);
     }
 
-    @Scheduled(cron = "0 0 6 ? * *")
-    public void deleteRejectedEvents() {
-        log.info("Starting job for rejected events deletion");
-        var events = eventRepository.getRejectedEventsNotUpdatedSince(LocalDateTime.now().minusDays(7));
-        log.info(events.size() + " events to delete");
-
-        for (var e : events) {
-            log.info("Deleting event with id " + e.getId());
-            if (e.getLogo() != null) {
-                s3Service.deleteFile(S3Service.EVENTS_FOLDER, e.getLogo());
-            }
-            eventRepository.delete(e);
-        }
-        log.info("Ending job for rejected events deletion");
-    }
-
     public EventOrdersDto getOrdersDetailsForEvent(Long eventId, Long organiserId) {
         organiserRepository.findById(organiserId)
                 .orElseThrow(() -> new NotFoundException("Organiser with " + organiserId + " not found!"));
@@ -552,5 +536,41 @@ public class EventService {
 
         event.setUpdatedAt(LocalDateTime.now());
         eventRepository.save(event);
+    }
+
+    @Scheduled(cron = "0 0 6 ? * *")
+    public void deleteRejectedEvents() {
+        log.info("Starting job for rejected events deletion");
+        var events = eventRepository.getRejectedEventsNotUpdatedSince(LocalDateTime.now().minusDays(7));
+        log.info(events.size() + " events to delete");
+
+        for (var e : events) {
+            log.info("Deleting event with id " + e.getId());
+            if (e.getLogo() != null) {
+                s3Service.deleteFile(S3Service.EVENTS_FOLDER, e.getLogo());
+            }
+            eventRepository.delete(e);
+        }
+        log.info("Ending job for rejected events deletion");
+    }
+
+    @Scheduled(cron = "0 0 10 ? * *")
+    public void sendParticipationReminders() {
+        log.info("Starting job for sending participating reminders");
+        var events = eventRepository.getEventsStartingAt(LocalDate.now().plusDays(2));
+        log.info(events.size() + " events starting in 2 days");
+
+        for (var e : events) {
+            var participants = orderRepository.getCustomersForEventUntil(e.getId(), LocalDateTime.now());
+            participants.forEach(p -> {
+                log.info("Sending reminder for event with id " + e.getId() + " to user with id " + p.getId());
+                try {
+                    sendEmailService.sendParticipationReminder(p, e);
+                } catch (Exception exception) {
+                    log.error("Exception intercepted during reminder sending.", exception);
+                }
+            });
+        }
+        log.info("Ending job for sending participating reminders");
     }
 }

@@ -1,6 +1,7 @@
 package com.unibuc.fmi.eventful.repository;
 
 import com.unibuc.fmi.eventful.model.Order;
+import com.unibuc.fmi.eventful.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -17,10 +18,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "WHERE o.paymentSession.id = :sessionId")
     Optional<Order> findByPaymentSessionId(String sessionId);
 
-    @Query("SELECT DISTINCT o.user.id " +
+    @Query("SELECT DISTINCT o.user " +
             "FROM Order o " +
             "WHERE o.event.id = :eventId AND o.orderDate <= :date")
-    List<Long> getCustomersForEventUntil(long eventId, LocalDateTime date);
+    List<User> getCustomersForEventUntil(long eventId, LocalDateTime date);
 
     @Query("SELECT DISTINCT o.user.id " +
             "FROM Order o " +
