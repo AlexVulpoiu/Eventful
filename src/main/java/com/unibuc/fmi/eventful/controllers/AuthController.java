@@ -154,7 +154,7 @@ public class AuthController {
         return ResponseEntity.ok(new MessageResponse("Legal person registered successfully!"));
     }
 
-    @GetMapping("/verify")
+    @PostMapping("/verify")
     public ResponseEntity<MessageResponse> verifyUser(@RequestParam UUID code) {
         Optional<AbstractUser> optionalUser = abstractUserRepository.findByVerificationCode(code);
         if (optionalUser.isEmpty()) {

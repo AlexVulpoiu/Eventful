@@ -22,8 +22,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SendEmailService {
 
-    @Value("${eventful.app.frontend.url}")
-    private String frontendUrl;
+    @Value("${eventful.app.confirm.account.url}")
+    private String confirmAccountUrl;
 
     @Value("${eventful.app.events.review.url}")
     private String eventsReviewUrl;
@@ -53,7 +53,7 @@ public class SendEmailService {
         helper.setSubject(subject);
 
         content = content.replace("[[name]]", user.getFullName());
-        String verifyURL = frontendUrl + "/verify?code=" + user.getVerificationCode();
+        String verifyURL = confirmAccountUrl + "/" + user.getVerificationCode();
 
         content = content.replace("[[URL]]", verifyURL);
 
