@@ -1,5 +1,6 @@
 package com.unibuc.fmi.eventful.controllers;
 
+import com.unibuc.fmi.eventful.dto.GeneralStatisticsDto;
 import com.unibuc.fmi.eventful.dto.OrganiserStatisticsDto;
 import com.unibuc.fmi.eventful.security.services.UserDetailsImpl;
 import com.unibuc.fmi.eventful.services.StatisticsService;
@@ -24,5 +25,11 @@ public class StatisticsController {
     @PreAuthorize("hasAuthority('ORGANISER')")
     public OrganiserStatisticsDto getStatistics(@AuthenticationPrincipal UserDetailsImpl principal) {
         return statisticsService.getStatistics(principal.getId());
+    }
+
+    @GetMapping("/general")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public GeneralStatisticsDto getGeneralStatistics() {
+        return statisticsService.getGeneralStatistics();
     }
 }

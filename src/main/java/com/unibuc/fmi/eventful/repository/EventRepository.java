@@ -63,4 +63,9 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             "FROM Event e " +
             "WHERE e.organiser.id = :organiserId AND e.status = 'ACCEPTED' AND e.charityPercentage > 0 AND YEAR(e.endDate) = :year")
     List<Event> getCharitableEventsByOrganiserAndYear(Long organiserId, int year);
+
+    @Query("SELECT e " +
+            "FROM Event e " +
+            "WHERE e.status = 'ACCEPTED' AND MONTH(e.startDate) = :month AND YEAR(e.startDate) = :year")
+    List<Event> getEventsByStartMonth(int month, int year);
 }
