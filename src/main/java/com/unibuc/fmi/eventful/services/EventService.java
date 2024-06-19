@@ -62,6 +62,7 @@ public class EventService {
     private int fee;
 
     final AbstractLocationRepository abstractLocationRepository;
+    final AbstractTicketRepository abstractTicketRepository;
     final AbstractUserRepository abstractUserRepository;
     final CategoryPriceRepository categoryPriceRepository;
     final EventRepository eventRepository;
@@ -327,6 +328,12 @@ public class EventService {
 
             var soldTickets = seatedTicketRepository.findSoldTicketsByEventId(eventId);
             soldTickets.forEach(t -> eventDto.getUnavailableSeats().add(new EventDto.Seat(t.getNumberOfRow(), t.getSeat())));
+        }
+
+        if (event.getEndDate().isBefore(LocalDateTime.now())) {
+            var tickets = abstractTicketRepository.findTicketsForEvent(eventId);
+            eventDto.setSoldTickets(tickets.size());
+            eventDto.setParticipants(tickets.stream().filter(AbstractTicket::isValidated).count());
         }
 
         return eventDto;

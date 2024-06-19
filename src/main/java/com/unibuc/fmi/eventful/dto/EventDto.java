@@ -43,6 +43,10 @@ public class EventDto {
 
     private LocalDate discountEndDate;
 
+    private int soldTickets;
+
+    private long participants;
+
     private RaffleDto raffle;
 
     private CharitableCauseDto charitableCause;
