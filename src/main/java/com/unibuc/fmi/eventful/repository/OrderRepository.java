@@ -40,4 +40,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "FROM Order o " +
             "WHERE o.paymentSession IS NOT null AND o.paymentSession.paymentStatus = 'COMPLETE' AND o.event.id = :eventId")
     Double getIncomeForEvent(Long eventId);
+
+    @Query("SELECT o " +
+            "FROM Order o " +
+            "WHERE o.paymentSession IS NULL AND o.orderDate <= :dateTime")
+    List<Order> getCanceledOrdersUntil(LocalDateTime dateTime);
 }

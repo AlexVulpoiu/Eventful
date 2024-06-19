@@ -13,12 +13,16 @@ import com.unibuc.fmi.eventful.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -94,5 +98,18 @@ public class OrderService {
         userRepository.save(user);
 
         return orderMapper.orderToOrderDto(order);
+    }
+
+    @Transactional
+    @Scheduled(cron = "0 42 * ? * *")
+    public void deleteCanceledOrders() {
+        log.info("Starting job for deleting canceled orders");
+        var canceledOrders = orderRepository.getCanceledOrdersUntil(LocalDateTime.now().minusHours(1));
+        log.info(canceledOrders.size() + " orders to delete");
+        for (var order : canceledOrders) {
+            log.info("Deleting order with id " + order.getId());
+            orderRepository.delete(order);
+        }
+        log.info("Ending job for deleting canceled orders");
     }
 }
