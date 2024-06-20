@@ -101,7 +101,7 @@ public class OrderService {
     }
 
     @Transactional
-    @Scheduled(cron = "0 42 * ? * *")
+    @Scheduled(cron = "0 0 * ? * *")
     public void deleteCanceledOrders() {
         log.info("Starting job for deleting canceled orders");
         var canceledOrders = orderRepository.getCanceledOrdersUntil(LocalDateTime.now().minusHours(1));
