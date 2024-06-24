@@ -75,8 +75,8 @@ public class EventController {
     }
 
     @GetMapping("/{eventId}")
-    public EventDto getEventDetails(@PathVariable Long eventId) {
-        return eventService.getEventDetails(eventId);
+    public EventDto getEventDetails(@PathVariable Long eventId, @AuthenticationPrincipal UserDetailsImpl principal) {
+        return eventService.getEventDetails(eventId, principal);
     }
 
     @GetMapping("/ticketInfo/{eventId}")

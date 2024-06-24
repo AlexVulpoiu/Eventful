@@ -1,6 +1,7 @@
 package com.unibuc.fmi.eventful.services;
 
 import com.unibuc.fmi.eventful.dto.request.event.AddReviewDto;
+import com.unibuc.fmi.eventful.exceptions.BadRequestException;
 import com.unibuc.fmi.eventful.exceptions.ForbiddenException;
 import com.unibuc.fmi.eventful.exceptions.NotFoundException;
 import com.unibuc.fmi.eventful.model.Review;
@@ -65,7 +66,7 @@ public class ReviewService {
             throw new ForbiddenException("You are not allowed to perform this operation!");
         }
         if (review.getText() != null) {
-            throw new ForbiddenException("The review can't be completed more than once!");
+            throw new BadRequestException("The review can't be completed more than once!");
         }
     }
 
@@ -80,7 +81,7 @@ public class ReviewService {
             throw new ForbiddenException("You are not allowed to perform this operation!");
         }
         if (review.getText() != null) {
-            throw new ForbiddenException("The review can't be completed more than once!");
+            throw new BadRequestException("The review can't be completed more than once!");
         }
 
         review.setText(addReviewDto.getText());

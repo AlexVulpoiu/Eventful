@@ -55,6 +55,6 @@ public class StandingCategory {
             discount = event.getActivePromotion().get().getValue();
         }
 
-        return (100 - discount) * price / 100;
+        return Double.parseDouble(String.format("%.2f", (100 - discount) * price / 100).replaceAll(",", "."));
     }
 }

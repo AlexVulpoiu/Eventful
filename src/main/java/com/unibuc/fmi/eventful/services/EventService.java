@@ -17,6 +17,7 @@ import com.unibuc.fmi.eventful.model.*;
 import com.unibuc.fmi.eventful.model.ids.CategoryPriceId;
 import com.unibuc.fmi.eventful.model.ids.StandingCategoryId;
 import com.unibuc.fmi.eventful.repository.*;
+import com.unibuc.fmi.eventful.security.services.UserDetailsImpl;
 import jakarta.mail.MessagingException;
 import jakarta.mail.util.ByteArrayDataSource;
 import lombok.AccessLevel;
@@ -40,6 +41,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -263,9 +265,17 @@ public class EventService {
         return eventPreviews;
     }
 
-    public EventDto getEventDetails(Long eventId) {
+    public EventDto getEventDetails(Long eventId, UserDetailsImpl principal) {
         var event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found!"));
+        if (!EventStatus.ACCEPTED.equals(event.getStatus())
+                && (principal == null || principal.getAuthorities().contains(new SimpleGrantedAuthority("USER")))) {
+            throw new ForbiddenException("You are not allowed to perform this operation!");
+        }
+        if (principal != null && principal.getAuthorities().contains(new SimpleGrantedAuthority("ORGANISER"))
+                && !Objects.equals(event.getOrganiser().getId(), principal.getId())) {
+            throw new ForbiddenException("You are not allowed to perform this operation!");
+        }
         var eventDto = eventMapper.eventToEventDto(event);
 
         event.getActivePromotion().ifPresent(p -> {
@@ -362,7 +372,7 @@ public class EventService {
         event.getPromotions().add(promotion);
         eventRepository.save(event);
 
-        return getEventDetails(eventId);
+        return getEventDetails(eventId, null);
     }
 
     public EventDto addRaffle(Long eventId, AddRaffleDto raffleDto, Long organiserId) {
@@ -394,7 +404,7 @@ public class EventService {
         event.setRaffle(raffle);
         eventRepository.save(event);
 
-        return getEventDetails(eventId);
+        return getEventDetails(eventId, null);
     }
 
     public EventOrdersDto getOrdersDetailsForEvent(Long eventId, Long organiserId) {
@@ -466,6 +476,7 @@ public class EventService {
 
         if (!name.equals(event.getName())) {
             event.setName(name);
+            event.setStatus(EventStatus.PENDING);
             event.setUpdatedAt(LocalDateTime.now());
             eventRepository.save(event);
         }
@@ -484,6 +495,7 @@ public class EventService {
 
         if (!description.equals(event.getDescription())) {
             event.setDescription(description);
+            event.setStatus(EventStatus.PENDING);
             event.setUpdatedAt(LocalDateTime.now());
             eventRepository.save(event);
         }
@@ -511,6 +523,7 @@ public class EventService {
             categoryPriceRepository.save(categoryPrice);
         }
 
+        event.setStatus(EventStatus.PENDING);
         event.setUpdatedAt(LocalDateTime.now());
         eventRepository.save(event);
     }
@@ -534,6 +547,7 @@ public class EventService {
             standingCategoryRepository.save(standingCategory);
         }
 
+        event.setStatus(EventStatus.PENDING);
         event.setUpdatedAt(LocalDateTime.now());
         eventRepository.save(event);
     }

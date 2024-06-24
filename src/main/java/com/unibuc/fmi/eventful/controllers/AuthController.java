@@ -5,9 +5,9 @@ import com.unibuc.fmi.eventful.dto.request.signup.LegalPersonSignupRequest;
 import com.unibuc.fmi.eventful.dto.request.signup.PersonSignupRequest;
 import com.unibuc.fmi.eventful.dto.request.signup.UserSignupRequest;
 import com.unibuc.fmi.eventful.dto.response.JwtResponse;
-import com.unibuc.fmi.eventful.dto.response.MessageResponse;
 import com.unibuc.fmi.eventful.enums.OrganiserStatus;
 import com.unibuc.fmi.eventful.exceptions.BadRequestException;
+import com.unibuc.fmi.eventful.exceptions.NotFoundException;
 import com.unibuc.fmi.eventful.mappers.OrganiserMapper;
 import com.unibuc.fmi.eventful.model.AbstractUser;
 import com.unibuc.fmi.eventful.model.Role;
@@ -16,12 +16,12 @@ import com.unibuc.fmi.eventful.repository.*;
 import com.unibuc.fmi.eventful.security.jwt.JwtUtils;
 import com.unibuc.fmi.eventful.security.services.UserDetailsImpl;
 import com.unibuc.fmi.eventful.services.SendEmailService;
+import com.unibuc.fmi.eventful.services.TokenBlacklistService;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -31,6 +31,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.UnsupportedEncodingException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,6 +52,7 @@ public class AuthController {
     OrganiserMapper organiserMapper;
     PersonRepository personRepository;
     LegalPersonRepository legalPersonRepository;
+    TokenBlacklistService tokenBlacklistService;
 
     @PostMapping("/login")
     public JwtResponse authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
@@ -78,19 +81,17 @@ public class AuthController {
     }
 
     @PostMapping("/users/signup")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody UserSignupRequest userSignupRequest)
+    public void registerUser(@Valid @RequestBody UserSignupRequest userSignupRequest)
             throws MessagingException, UnsupportedEncodingException {
         if (abstractUserRepository.existsByEmail(userSignupRequest.getEmail())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Error: Email is already in use!"));
+            throw new BadRequestException("This email is already in use!");
         }
 
         User user = new User(userSignupRequest.getFirstName(), userSignupRequest.getLastName(), userSignupRequest.getEmail(),
                 passwordEncoder.encode(userSignupRequest.getPassword()));
 
         Role userRole = roleRepository.findByName("USER")
-                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                .orElseThrow(() -> new NotFoundException("USER role not found!"));
         Set<Role> roles = new HashSet<>();
         roles.add(userRole);
         user.setRoles(roles);
@@ -98,21 +99,17 @@ public class AuthController {
         userRepository.save(user);
 
         sendEmailService.sendVerificationEmail(user);
-
-        return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
 
     @PostMapping("/organisers/signup")
-    public ResponseEntity<?> registerPerson(@Valid @RequestBody PersonSignupRequest request)
+    public void registerPerson(@Valid @RequestBody PersonSignupRequest request)
             throws MessagingException, UnsupportedEncodingException {
         if (abstractUserRepository.existsByEmail(request.getEmail())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Error: Email is already in use!"));
+            throw new BadRequestException("This email is already in use!");
         }
 
         var role = roleRepository.findByName("ORGANISER")
-                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                .orElseThrow(() -> new NotFoundException("ORGANISER role not found!"));
         Set<Role> roles = new HashSet<>();
         roles.add(role);
 
@@ -124,21 +121,17 @@ public class AuthController {
         personRepository.save(person);
 
         sendEmailService.sendVerificationEmail(person);
-
-        return ResponseEntity.ok(new MessageResponse("Person registered successfully!"));
     }
 
     @PostMapping("/organisers/legal/signup")
-    public ResponseEntity<?> registerLegalPerson(@Valid @RequestBody LegalPersonSignupRequest request)
+    public void registerLegalPerson(@Valid @RequestBody LegalPersonSignupRequest request)
             throws MessagingException, UnsupportedEncodingException {
         if (abstractUserRepository.existsByEmail(request.getEmail())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Error: Email is already in use!"));
+            throw new BadRequestException("This email is already in use!");
         }
 
         var role = roleRepository.findByName("ORGANISER")
-                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                .orElseThrow(() -> new NotFoundException("ORGANISER role is not found."));
         Set<Role> roles = new HashSet<>();
         roles.add(role);
 
@@ -150,24 +143,34 @@ public class AuthController {
         legalPersonRepository.save(legalPerson);
 
         sendEmailService.sendVerificationEmail(legalPerson);
-
-        return ResponseEntity.ok(new MessageResponse("Legal person registered successfully!"));
     }
 
     @PostMapping("/verify")
-    public ResponseEntity<MessageResponse> verifyUser(@RequestParam UUID code) {
+    public void verifyUser(@RequestParam UUID code) {
         Optional<AbstractUser> optionalUser = abstractUserRepository.findByVerificationCode(code);
         if (optionalUser.isEmpty()) {
-            return ResponseEntity.badRequest().body(new MessageResponse("The verification code is not valid!"));
+            throw new BadRequestException("The verification code is not valid!");
         }
 
         AbstractUser abstractUser = optionalUser.get();
         if (abstractUser.isEnabled()) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Your account has already been activated!"));
+            throw new BadRequestException("Your account has already been activated!");
         }
 
         abstractUser.setEnabled(true);
         abstractUserRepository.save(abstractUser);
-        return ResponseEntity.ok(new MessageResponse("Your account has been successfully activated!"));
+    }
+
+    @PostMapping("/logout")
+    public void logout(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String jwt = authHeader.substring(7);
+            Date expirationDate = jwtUtils.getExpirationDateFromJwtToken(jwt);
+            LocalDateTime expirationLocalDateTime = expirationDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+            tokenBlacklistService.blacklistToken(jwt, expirationLocalDateTime);
+            SecurityContextHolder.clearContext();
+            return;
+        }
+        throw new BadRequestException("Invalid token!");
     }
 }
