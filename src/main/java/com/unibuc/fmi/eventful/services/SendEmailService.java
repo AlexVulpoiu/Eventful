@@ -13,6 +13,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -353,7 +354,7 @@ public class SendEmailService {
         tableRow = tableRow.replace("[[PRODUCT]]", productName.toString());
         tableRow = tableRow.replace("[[QUANTITY]]", String.valueOf(ticketsList.size()));
         tableRow = tableRow.replace("[[PRICE]]", String.valueOf(price));
-        tableRow = tableRow.replace("[[TOTAL]]", String.valueOf(ticketsList.size() * price));
+        tableRow = tableRow.replace("[[TOTAL]]", String.valueOf(BigDecimal.valueOf(ticketsList.size()).multiply(BigDecimal.valueOf(price))));
         return tableRow;
     }
 
@@ -371,7 +372,7 @@ public class SendEmailService {
         tableRow = tableRow.replace("[[PRODUCT]]", ticketsList.get(0).getName());
         tableRow = tableRow.replace("[[QUANTITY]]", String.valueOf(ticketsList.size()));
         tableRow = tableRow.replace("[[PRICE]]", String.valueOf(price));
-        tableRow = tableRow.replace("[[TOTAL]]", String.valueOf(ticketsList.size() * price));
+        tableRow = tableRow.replace("[[TOTAL]]", String.valueOf(BigDecimal.valueOf(ticketsList.size()).multiply(BigDecimal.valueOf(price))));
         return tableRow;
     }
 }

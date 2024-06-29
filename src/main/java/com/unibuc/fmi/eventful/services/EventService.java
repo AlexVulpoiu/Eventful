@@ -285,6 +285,7 @@ public class EventService {
 
         var raffle = event.getRaffle();
         if (raffle != null) {
+            eventDto.setCanAddRaffle(false);
             if ((raffle.getEndDate() != null && !raffle.getEndDate().isBefore(LocalDate.now()))
                     || (raffle.getParticipantsLimit() > 0 && raffle.getTotalParticipants() < raffle.getParticipantsLimit())) {
                 eventDto.setRaffle(RaffleDto.builder()
@@ -295,6 +296,8 @@ public class EventService {
                         .totalParticipants(raffle.getTotalParticipants())
                         .build());
             }
+        } else {
+            eventDto.setCanAddRaffle(true);
         }
 
         if (event.getCharitableCause() != null) {

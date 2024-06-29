@@ -1,6 +1,7 @@
 package com.unibuc.fmi.eventful.dto;
 
 import com.unibuc.fmi.eventful.enums.EventStatus;
+import com.unibuc.fmi.eventful.enums.FeeSupporter;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -46,6 +47,10 @@ public class EventDto {
     private int soldTickets;
 
     private long participants;
+
+    private FeeSupporter feeSupporter;
+
+    private boolean canAddRaffle;
 
     private RaffleDto raffle;
 

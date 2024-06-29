@@ -8,6 +8,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.stream.Collectors;
 
@@ -26,6 +27,11 @@ public class ExceptionControllerAdvice {
                 .map(e -> "Field: " + e.getField() + ", error: " + e.getDefaultMessage() + ", value: " + e.getRejectedValue())
                 .collect(Collectors.joining("\n"));
         return new ResponseEntity<>(invalidFields, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler({MaxUploadSizeExceededException.class})
+    public ResponseEntity<String> handleMaxUploadSize() {
+        return new ResponseEntity<>("You can't upload files larger than 10 MB! Please try again with another image.", HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler({AuthenticationException.class})

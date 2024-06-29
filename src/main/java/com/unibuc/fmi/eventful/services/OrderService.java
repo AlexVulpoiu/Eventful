@@ -18,6 +18,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -90,7 +92,7 @@ public class OrderService {
             throw new BadRequestException("Discount points value exceeds order total!");
         }
         order.setDiscountPoints(newOrderDto.getDiscountPoints());
-        order.setTotal(total);
+        order.setTotal(BigDecimal.valueOf(total).setScale(2, RoundingMode.HALF_UP).doubleValue());
         order.setTickets(tickets);
         order = orderRepository.save(order);
 
