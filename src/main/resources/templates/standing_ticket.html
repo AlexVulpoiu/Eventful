@@ -50,6 +50,11 @@
                 flex: 1;
                 text-align: center;
             }
+            .logo img {
+                height: 100%;
+                width: 100%;
+                object-fit: cover;
+            }
             .details {
                 margin-top: 20px;
                 display: flex;
@@ -82,7 +87,7 @@
 
             <div class="content">
                 <div class="logo">
-                    <img th:src="@{${eventLogo}}" alt="Event Logo" height="250" width="auto">
+                    <img th:src="@{${eventLogo}}" alt="Event Logo">
                 </div>
 
                 <div class="qrcode">
