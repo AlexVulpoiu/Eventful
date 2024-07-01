@@ -11,10 +11,12 @@ import com.unibuc.fmi.eventful.repository.OrganiserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -27,6 +29,7 @@ public class CharitableCauseService {
     public CharitableCause addCharitableCause(AddOrEditCharitableCauseDto addCharitableCauseDto, Long organiserId) {
         Organiser organiser = organiserRepository.findById(organiserId)
                 .orElseThrow(() -> new NotFoundException("Organiser with id " + organiserId + " not found!"));
+        log.info("Adding charitable cause with name: " + addCharitableCauseDto.getName());
         var charitableCause = charitableCauseMapper.addCharitableCauseDtoToCharitableCause(addCharitableCauseDto);
         charitableCause.setOrganiser(organiser);
         charitableCause = charitableCauseRepository.save(charitableCause);
@@ -42,6 +45,7 @@ public class CharitableCauseService {
             throw new ForbiddenException("You are not allowed to perform this action!");
         }
 
+        log.info("Editing charitable cause with id: " + causeId);
         charitableCause.setName(editCharitableCauseDto.getName());
         charitableCause.setDescription(editCharitableCauseDto.getDescription());
         charitableCause.setNeededAmount(editCharitableCauseDto.getNeededAmount());

@@ -57,6 +57,7 @@ public class OrderService {
             throw new BadRequestException("You can't have more than 10 tickets per order!");
         }
 
+        log.info("Placing order...");
         var location = event.getLocation();
 
         var order = orderRepository.save(new Order(user, event));
@@ -95,6 +96,7 @@ public class OrderService {
         order.setTotal(BigDecimal.valueOf(total).setScale(2, RoundingMode.HALF_UP).doubleValue());
         order.setTickets(tickets);
         order = orderRepository.save(order);
+        log.info("Created order with id " + order.getId());
 
         user.usePoints(order.getDiscountPoints());
         userRepository.save(user);

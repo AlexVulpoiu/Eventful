@@ -9,12 +9,14 @@ import com.unibuc.fmi.eventful.repository.FeedbackRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -26,6 +28,7 @@ public class FeedbackService {
     public void addFeedback(AddFeedbackDto feedbackDto, Long userId) {
         var user = abstractUserRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with id " + userId + " not found!"));
+        log.info("Adding feedback by user " + userId);
         Feedback feedback = Feedback.builder()
                 .text(feedbackDto.getText())
                 .dateTime(LocalDateTime.now())

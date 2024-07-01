@@ -9,11 +9,13 @@ import com.unibuc.fmi.eventful.repository.VoucherRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -28,6 +30,7 @@ public class VoucherService {
             return null;
         }
 
+        log.info("Generating voucher for order " + order.getId());
         raffle.increaseTotalParticipants();
         raffleRepository.save(raffle);
 
@@ -42,6 +45,7 @@ public class VoucherService {
     }
 
     public Voucher generateVoucher(User user, Raffle raffle) {
+        log.info("Generating voucher for user " + user.getId() + " and raffle " + raffle.getId());
         raffle.setUser(user);
         raffleRepository.save(raffle);
 

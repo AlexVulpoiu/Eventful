@@ -30,6 +30,7 @@ import jakarta.mail.util.ByteArrayDataSource;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +46,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -96,6 +98,7 @@ public class TicketService {
             throw new BadRequestException("Only " + availableTickets + " tickets available for " + category + "category!");
         }
 
+        log.info("Generating standing tickets for order " + order.getId());
         List<AbstractTicket> tickets = new ArrayList<>();
         for (int i = 0; i < numberOfTickets; i++) {
             tickets.add(new StandingTicket(order, standingCategory));
@@ -109,6 +112,7 @@ public class TicketService {
                                                              long eventId, Order order) {
         List<AbstractTicket> tickets = new ArrayList<>();
 
+        log.info("Generating seating tickets for order " + order.getId());
         for (var seatDetails : seatedTicketsDetails) {
             var categoryPriceId = new CategoryPriceId(seatDetails.getCategoryId(), eventId);
             var categoryPrice = categoryPriceRepository.findById(categoryPriceId)
@@ -215,6 +219,7 @@ public class TicketService {
             throw new BadRequestException("The ticket was already validated!");
         }
 
+        log.info("Validating ticket " + ticketId);
         ticket.setValidated(true);
         abstractTicketRepository.save(ticket);
     }

@@ -13,12 +13,14 @@ import jakarta.mail.MessagingException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -65,6 +67,7 @@ public class OrganiserService {
             throw new BadRequestException("The status of this organiser can't be changed!");
         }
 
+        log.info("Updating status for organiser " + organiserId + " from " + organiser.getStatus() + " to " + status);
         organiser.setStatus(status);
         organiserRepository.save(organiser);
         sendEmailService.sendOrganiserStatusChangedEmail(organiser);

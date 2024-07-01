@@ -84,6 +84,7 @@ public class ReviewService {
             throw new BadRequestException("The review can't be completed more than once!");
         }
 
+        log.info("Adding review for event " + review.getEvent().getId() + " from user " + userId);
         review.setText(addReviewDto.getText());
         review.setDateTime(LocalDateTime.now());
         reviewRepository.save(review);

@@ -100,6 +100,7 @@ public class EventService {
             throw new BadRequestException("The selected location is not available at the requested date and time!");
         }
 
+        log.info("Adding event " + addEventDto.getName());
         var event = eventMapper.addOrEditEventDtoToEvent(addEventDto);
         event.setStatus(EventStatus.PENDING);
         event.setLocation(location);
@@ -121,6 +122,7 @@ public class EventService {
                 throw new BadRequestException("At least one standing category must be provided for this kind of event!");
             }
 
+            log.info("Adding standing categories for event " + event.getName());
             for (var standingCategoryDto : standingCategories) {
                 var standingCategoryId = new StandingCategoryId(addEventDto.getLocationId(), event.getId(),
                         standingCategoryDto.getName());
@@ -135,6 +137,7 @@ public class EventService {
                 throw new BadRequestException("Categories prices must be provided for this kind of event!");
             }
 
+            log.info("Adding seated categories for event " + event.getName());
             for (var categoryPriceDto : categoriesPrices) {
                 var seatsCategoryId = categoryPriceDto.getCategoryId();
                 var seatsCategory = seatsCategoryRepository.findById(seatsCategoryId)
@@ -158,6 +161,7 @@ public class EventService {
         }
 
         if (Optional.ofNullable(logo).isPresent()) {
+            log.info("Updating logo for event " + event.getName());
             String logoName = logo.getOriginalFilename();
             String extension = logoName != null ? logoName.substring(logoName.lastIndexOf('.') + 1) : "";
             String fileName = Optional.ofNullable(event.getLogo()).isPresent()
@@ -180,6 +184,7 @@ public class EventService {
                 && (changeEventStatusDto.getReason() == null || changeEventStatusDto.getReason().isBlank())) {
             throw new BadRequestException("A rejection reason must be provided!");
         }
+        log.info("Changing staus for event " + eventId + " from " + event.getStatus() + " to " + changeEventStatusDto.getStatus());
         event.setStatus(changeEventStatusDto.getStatus());
         if (EventStatus.REJECTED.equals(changeEventStatusDto.getStatus())) {
             event.setRejectionReason(changeEventStatusDto.getReason());
@@ -208,6 +213,7 @@ public class EventService {
     }
 
     public ByteArrayDataSource generateIcsForEvent(Event event) throws IOException {
+        log.info("Generating ics file for event " + event.getName());
         Calendar calendar = new Calendar();
         calendar.add(new ProdId("-//Eventful//iCal4j 1.0//EN"));
         calendar.add(ImmutableVersion.VERSION_2_0);
@@ -367,6 +373,7 @@ public class EventService {
             throw new BadRequestException("Promotion end date can't be after event end date!");
         }
 
+        log.info("Adding promotion for event " + eventId + ": " + promotionDto.getValue() + "% until " + promotionDto.getEndDate());
         Promotion promotion = Promotion.builder()
                 .value(promotionDto.getValue())
                 .endDate(promotionDto.getEndDate())
@@ -394,6 +401,12 @@ public class EventService {
             throw new BadRequestException("A raffle should have either a limit for participants or a limit date!");
         }
 
+        log.info("Adding raffle for event " + eventId);
+        if (raffleDto.getParticipantsLimit() > 0) {
+            log.info("Participants limit: " + raffleDto.getParticipantsLimit());
+        } else {
+            log.info("Date limit: " + raffleDto.getEndDate());
+        }
         Raffle raffle = Raffle.builder()
                 .participantsLimit(raffleDto.getParticipantsLimit())
                 .endDate(raffleDto.getEndDate())
@@ -477,6 +490,7 @@ public class EventService {
             throw new ForbiddenException("You are not allowed to perform this action!");
         }
 
+        log.info("Updating name of event " + eventId + " to " + name);
         if (!name.equals(event.getName())) {
             event.setName(name);
             event.setStatus(EventStatus.PENDING);
@@ -496,6 +510,7 @@ public class EventService {
             throw new ForbiddenException("You are not allowed to perform this action!");
         }
 
+        log.info("Updating description for event " + eventId);
         if (!description.equals(event.getDescription())) {
             event.setDescription(description);
             event.setStatus(EventStatus.PENDING);
@@ -515,6 +530,7 @@ public class EventService {
             throw new ForbiddenException("You are not allowed to perform this action!");
         }
 
+        log.info("Updating prices for event " + eventId);
         for (var categoryId : categoriesPrices.keySet()) {
             seatsCategoryRepository.findById(categoryId)
                     .orElseThrow(() -> new NotFoundException("Seats category with id " + categoryId + " not found!"));
@@ -542,6 +558,7 @@ public class EventService {
             throw new ForbiddenException("You are not allowed to perform this action!");
         }
 
+        log.info("Updating prices for event " + eventId);
         for (var categoryName : categoriesPrices.keySet()) {
             var standingCategoryId = new StandingCategoryId(event.getLocation().getId(), event.getId(), categoryName);
             var standingCategory = standingCategoryRepository.findById(standingCategoryId)

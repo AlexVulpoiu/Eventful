@@ -7,6 +7,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.util.ByteArrayDataSource;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -20,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SendEmailService {
@@ -41,6 +43,7 @@ public class SendEmailService {
     private final static DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy, HH:mm");
 
     public void sendVerificationEmail(AbstractUser user) throws MessagingException, UnsupportedEncodingException {
+        log.info("Sending verification email to user " + user.getId());
         String toAddress = user.getEmail();
         String subject = "Please verify your registration";
         String content = "Dear [[name]],<br><br>"
@@ -67,6 +70,7 @@ public class SendEmailService {
     }
 
     public void sendEventStatusChangedEmail(Event event) throws MessagingException, UnsupportedEncodingException {
+        log.info("Sending event status changed email for event " + event.getId());
         String toAddress = event.getOrganiser().getEmail();
         String subject = "Status changed for " + event.getName();
         String reason = EventStatus.REJECTED.equals(event.getStatus())
@@ -94,6 +98,7 @@ public class SendEmailService {
     }
 
     public void sendOrganiserStatusChangedEmail(Organiser organiser) throws MessagingException, UnsupportedEncodingException {
+        log.info("Sending organiser status changed event for organiser " + organiser.getId());
         String toAddress = organiser.getEmail();
         String subject = "Status changed for your account";
         String content = "Hello [[NAME]],<br><br>"
@@ -120,6 +125,7 @@ public class SendEmailService {
     public void sendOrderSummaryEmail(Order order, Map<String, ByteArrayDataSource> pdfTickets, ByteArrayDataSource ics,
                                       Voucher voucher)
             throws MessagingException, UnsupportedEncodingException {
+        log.info("Sending order summary email to " + order.getUser().getId());
         String toAddress = order.getUser().getEmail();
         String subject = "Eventful order " + order.getId() + " summary";
         String content = "Hello [[NAME]],<br>"
@@ -256,6 +262,7 @@ public class SendEmailService {
 
     public void sendRaffleWinnerEmail(Raffle raffle, User user, Voucher voucher)
             throws MessagingException, UnsupportedEncodingException {
+        log.info("Sending raffle winner email to user " + user.getId());
         String toAddress = user.getEmail();
         String subject = "Raffle winner for event: " + raffle.getEvent().getName();
         String content = "Hello [[NAME]],<br><br>"
@@ -285,6 +292,7 @@ public class SendEmailService {
     }
 
     public void sendReviewReminder(Review review) throws MessagingException, UnsupportedEncodingException {
+        log.info("Sending review reminder email to user " + review.getUser().getId());
         String toAddress = review.getUser().getEmail();
         String subject = "Review for event " + review.getEvent().getName();
         String content = "Hello [[NAME]],<br><br>"
@@ -311,6 +319,7 @@ public class SendEmailService {
     }
 
     public void sendParticipationReminder(User user, Event event) throws MessagingException, UnsupportedEncodingException {
+        log.info("Sending participation reminder to user " + user.getId() + " for event " + event.getId());
         String toAddress = user.getEmail();
         String subject = "Participation reminder for event " + event.getName();
         String content = "Hello [[NAME]],<br><br>"

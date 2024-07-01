@@ -16,11 +16,13 @@ import com.unibuc.fmi.eventful.repository.StandingLocationRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -32,11 +34,13 @@ public class LocationService {
     AbstractLocationRepository abstractLocationRepository;
 
     public Long addStandingLocation(AddStandingLocationDto addStandingLocationDto) {
+        log.info("Adding standing location " + addStandingLocationDto.getName() + " with capacity " + addStandingLocationDto.getCapacity());
         var standingLocation = locationMapper.addStandingLocationDtoToStandingLocation(addStandingLocationDto);
         return standingLocationRepository.save(standingLocation).getId();
     }
 
     public Long addSeatedLocation(AddSeatedLocationDto addSeatedLocationDto) {
+        log.info("Adding seated location " + addSeatedLocationDto.getName() + " with " + addSeatedLocationDto.getNumberOfRows() + " rows and " + addSeatedLocationDto.getSeatsPerRow() + " seats per row");
         var seatedLocation = locationMapper.addSeatedLocationDtoToSeatedLocation(addSeatedLocationDto);
         seatedLocation = seatedLocationRepository.save(seatedLocation);
         for (var sc : seatedLocation.getSeatsCategories()) {

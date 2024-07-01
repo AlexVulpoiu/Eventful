@@ -13,6 +13,7 @@ import jakarta.mail.MessagingException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -59,6 +61,8 @@ public class UserService {
                 passwordEncoder.encode(defaultPassword));
         Role moderatorRole = roleRepository.findByName("MODERATOR")
                 .orElseThrow(() -> new NotFoundException("Moderator role not found!"));
+
+        log.info("Adding moderator " + addModeratorDto.getEmail())
         Set<Role> roles = new HashSet<>();
         roles.add(moderatorRole);
         user.setRoles(roles);
@@ -75,6 +79,7 @@ public class UserService {
             throw new NotFoundException("Role with name " + roleName + " not found!");
         }
 
+        log.info("Changing role for user " + userId + " to " + roleName);
         Set<Role> roles = new HashSet<>();
         roles.add(role.get());
         user.setRoles(roles);
@@ -87,6 +92,7 @@ public class UserService {
         if (role.isEmpty()) {
             throw new NotFoundException("Role with name MODERATOR not found!");
         }
+        log.info("Deleting moderator " + user.getEmail());
         user.setRoles(new HashSet<>());
         user = userRepository.save(user);
 
