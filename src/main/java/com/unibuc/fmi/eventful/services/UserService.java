@@ -62,7 +62,7 @@ public class UserService {
         Role moderatorRole = roleRepository.findByName("MODERATOR")
                 .orElseThrow(() -> new NotFoundException("Moderator role not found!"));
 
-        log.info("Adding moderator " + addModeratorDto.getEmail())
+        log.info("Adding moderator " + addModeratorDto.getEmail());
         Set<Role> roles = new HashSet<>();
         roles.add(moderatorRole);
         user.setRoles(roles);
