@@ -36,7 +36,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "ORDER BY o.orderDate DESC")
     List<Order> getOrdersForEvent(Long eventId);
 
-    @Query("SELECT SUM(o.total) " +
+    @Query("SELECT COALESCE(SUM(o.total), 0) " +
             "FROM Order o " +
             "WHERE o.paymentSession IS NOT null AND o.paymentSession.paymentStatus = 'COMPLETE' AND o.event.id = :eventId")
     Double getIncomeForEvent(Long eventId);

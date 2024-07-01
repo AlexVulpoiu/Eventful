@@ -46,7 +46,7 @@ public class StatisticsService {
                 Double eventIncome = orderRepository.getIncomeForEvent(event.getId());
                 income += (eventIncome == null ? 0.0 : eventIncome);
             }
-            monthlyIncome.add(income);
+            monthlyIncome.add(Double.parseDouble(String.format("%.2f", income).replaceAll(",", ".")));
         }
 
         var charitableEventsThisYear = eventRepository.getCharitableEventsByOrganiserAndYear(organiserId, currentDate.getYear());
